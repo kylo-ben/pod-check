@@ -934,6 +934,8 @@ function LobbyStatus({ session, mySeat }) {
 function CommanderSearch({ onSelect, color }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
+  const [cmdError, setCmdError] = useState(null);
+  const [validating, setValidating] = useState(false);
   const debounceRef = useRef(null);
 
   const search = async (q) => {
@@ -941,6 +943,27 @@ function CommanderSearch({ onSelect, color }) {
     const res = await fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(q)}&include_extras=false`, { headers: { "User-Agent": "PodCheck/1.0 (pod-check.vercel.app)" } });
     const data = await res.json();
     setResults((data.data || []).slice(0, 8));
+  };
+
+  const handleSelect = async (name) => {
+    const decoded = decodeEntities(name);
+    setQuery(decoded);
+    setResults([]);
+    setCmdError(null);
+    setValidating(true);
+    try {
+      const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(decoded)}`, { headers: { "User-Agent": "PodCheck/1.0 (pod-check.vercel.app)" } });
+      const card = await res.json();
+      if (card.legalities?.commander !== "legal") {
+        setCmdError("That card isn't legal as a commander. Try another.");
+        return;
+      }
+      onSelect(decoded);
+    } catch {
+      setCmdError("That card isn't legal as a commander. Try another.");
+    } finally {
+      setValidating(false);
+    }
   };
 
   return (
@@ -951,8 +974,9 @@ function CommanderSearch({ onSelect, color }) {
         value={query}
         onChange={e => {
           setQuery(e.target.value);
+          setCmdError(null);
           clearTimeout(debounceRef.current);
-          debounceRef.current = setTimeout(() => search(e.target.value), 300);
+          debounceRef.current = setTimeout(() => search(e.target.value), 400);
         }}
         placeholder="Search commander name..."
         autoFocus
@@ -963,7 +987,7 @@ function CommanderSearch({ onSelect, color }) {
           {results.map(name => (
             <div
               key={name}
-              onClick={() => { const decoded = decodeEntities(name); setQuery(decoded); setResults([]); onSelect(decoded); }}
+              onClick={() => handleSelect(name)}
               style={{ padding: "12px 14px", fontSize: 13, color: "#e0f2ff", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
             >
               {decodeEntities(name)}
@@ -971,6 +995,8 @@ function CommanderSearch({ onSelect, color }) {
           ))}
         </div>
       )}
+      {validating && <div style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>Checking legality...</div>}
+      {cmdError && <div style={{ fontSize: 12, color: "#f87171", marginTop: 8 }}>{cmdError}</div>}
     </div>
   );
 }
@@ -1190,11 +1216,13 @@ export default function JoinPage() {
   useEffect(() => {
     if (!session) return;
     if (session.game?.phase === "playing" && step < 8) { setStep(8); return; }
+    if (session.game?.phase === "rolling" && step < 7) { setStep(7); return; }
     const isLifetrack = session.mode === 'lifetrack';
     const allReady = session.players.every(p => p.status === "ready");
     const allAgreed = allReady && session.players.filter(p => p.status === "ready").every(p => p.agreed);
     if (allAgreed && !session.game && step < 7) { setStep(7); return; }
-    if (allReady && !allAgreed && step < 5 && mySeat !== null) { setStep(isLifetrack ? 6 : 5); return; }
+    if (isLifetrack && allReady && !session.game && step < 7) { setStep(7); return; }
+    if (!isLifetrack && allReady && !allAgreed && step < 5 && mySeat !== null) { setStep(5); return; }
   }, [session, step, mySeat]);
 
   useEffect(() => {
@@ -1262,32 +1290,24 @@ export default function JoinPage() {
   }, [session, sessionId]);
 
   const handleStartLifeTrack = useCallback(async () => {
-    const id = makeSessionId();
-    const data = newSession(id, 'lifetrack');
-
-    // Pre-populate all 4 slots from the current session's player data
-    session.players.forEach((p, i) => {
-      if (p.status === "empty") return;
-      data.players[i] = {
-        ...data.players[i],
-        name: p.deckData?.commander || p.name || `Player ${i + 1}`,
-        status: "ready",
-        agreed: true,
-        deckData: p.deckData || null,
-      };
-    });
-
-    // Start at rolling phase so players go straight to turn order
-    data.game = {
-      phase: "rolling",
-      turnOrder: [0, 1, 2, 3],
-      currentTurn: 0,
-      players: data.players.map(() => ({ life: 40, poison: 0, commanderDamage: {}, eliminated: false })),
+    const withAgreed = {
+      ...session,
+      players: session.players.map(p =>
+        p.status === "ready" ? { ...p, agreed: true } : p
+      ),
+      game: {
+        phase: "rolling",
+        turnOrder: [0, 1, 2, 3],
+        currentTurn: 0,
+        players: session.players.map(() => ({
+          life: 40, poison: 0, commanderDamage: {}, eliminated: false
+        })),
+      },
     };
-
-    const { error } = await supabase.from("sessions").insert({ id, data });
-    if (!error) navigate(`/host/${id}`);
-  }, [navigate, session]);
+    await supabase.from("sessions").update({ data: withAgreed }).eq("id", sessionId);
+    setSession(withAgreed);
+    setStep(7);
+  }, [session, sessionId]);
 
   const handleGameUpdate = useCallback(async (updatedGame) => {
     const updated = { ...session, game: updatedGame };
