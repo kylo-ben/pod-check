@@ -208,7 +208,7 @@ export default function HostPage() {
 
         {/* Join as player button */}
         <button
-          onClick={() => navigate(`/join/${sessionId}`)}
+          onClick={() => navigate(`/join/${sessionId}?host=1`)}
           style={{
             width: "100%", marginBottom: 16,
             background: hasGame ? "#4c819c" : "rgba(76,129,156,0.12)",

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import { COLORS, BRACKET_META, PageWrapper, Logo, SessionCodeCard } from "../lib/ui.jsx";
 import { QRCodeSVG } from "qrcode.react";
@@ -263,8 +263,8 @@ function CommanderSearch({ onSelect, color }) {
 
   return (
     <div style={{ animation: "fadeUp 0.4s ease both" }}>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "#d4d8eb", marginBottom: 12, lineHeight: 1.1 }}>WHO'S YOUR COMMANDER?</div>
-      <div style={{ fontSize: 13, color: "#8890b0", lineHeight: 1.8, marginBottom: 20 }}>Search and tap your commander. That's your display name.</div>
+      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "var(--pc-textPrimary)", marginBottom: 12, lineHeight: 1.1 }}>WHO'S YOUR COMMANDER?</div>
+      <div style={{ fontSize: 13, color: "var(--pc-textSecondary)", lineHeight: 1.8, marginBottom: 20 }}>Search and tap your commander. That's your display name.</div>
       <input
         value={query}
         onChange={e => {
@@ -331,7 +331,7 @@ function EscapeHatch({ onComplete }) {
       ].map(({ b, label }) => (
         <button key={b}
           onClick={() => setBracket({ b, label })}
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "rgba(26,28,46,0.1)", border: "1px solid rgba(26,28,46,0.2)", borderRadius: 8, padding: "10px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", color: "#d4d8eb" }}>
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "rgba(26,28,46,0.1)", border: "1px solid rgba(26,28,46,0.2)", borderRadius: 8, padding: "10px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", color: "var(--pc-textPrimary)" }}>
           <span style={{ fontSize: 12 }}>B{b} · {label}</span>
           <span style={{ fontSize: 10, color: "rgba(61,63,90,0.5)" }}>→</span>
         </button>
@@ -389,8 +389,8 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
 
   return (
     <div style={{ animation: "fadeUp 0.4s ease both" }}>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: "#d4d8eb", marginBottom: 6, lineHeight: 1.1 }}>ANALYZE YOUR DECK</div>
-      <div style={{ fontSize: 12, color: "rgba(61,63,90,0.7)", marginBottom: 24, lineHeight: 1.7 }}>One paste. Thirty seconds.</div>
+      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: "var(--pc-textPrimary)", marginBottom: 6, lineHeight: 1.1 }}>ANALYZE YOUR DECK</div>
+      <div style={{ fontSize: 12, color: "var(--pc-textSecondary)", marginBottom: 24, lineHeight: 1.7 }}>One paste. Thirty seconds.</div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {BAR_DEFS.map(({ label, sub }, i) => {
@@ -416,7 +416,7 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
                   ) : i + 1}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: done ? "#5aaa88" : active ? "#d4d8eb" : "rgba(61,63,90,0.5)", letterSpacing: 1 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: done ? "#5aaa88" : active ? "var(--pc-textPrimary)" : "rgba(61,63,90,0.5)", letterSpacing: 1 }}>{label}</div>
                   <div style={{ fontSize: 10, color: "rgba(61,63,90,0.5)", marginTop: 1 }}>{sub}</div>
                 </div>
                 <div style={{ fontSize: 14, color: done ? "#5aaa88" : active ? myColor : "rgba(26,28,46,0.2)", flexShrink: 0 }}>
@@ -485,6 +485,8 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
 export default function JoinPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHost = new URLSearchParams(location.search).get("host") === "1";
   const [session, setSession] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [step, setStep] = useState(1);
@@ -546,8 +548,14 @@ export default function JoinPage() {
     if (!checkedStorage) return;
     if (step !== 1 || !session || mySeat !== null) return;
     if (session.players.filter(p => p.status !== "empty").length >= 4) return;
+    if (isHost) {
+      setMySeat(0);
+      setStep(3);
+      localStorage.setItem(`podcheck-${sessionId}`, "0");
+      return;
+    }
     joinSession();
-  }, [checkedStorage, step, session, mySeat, joinSession]);
+  }, [checkedStorage, step, session, mySeat, joinSession, isHost, sessionId]);
 
   const handleThreeBarComplete = useCallback(async (deckData) => {
     const ready = { ...session, players: session.players.map((p, i) =>
@@ -618,8 +626,8 @@ export default function JoinPage() {
         {step === 4 && (
           <div style={{ animation: "fadeUp 0.4s ease both", textAlign: "center", padding: "32px 0" }}>
             <div style={{ fontSize: 11, color: "#5aaa88", letterSpacing: 2, marginBottom: 20 }}>✓ DECK SUBMITTED</div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "#d4d8eb", marginBottom: 8 }}>WAITING FOR THE POD</div>
-            <div style={{ fontSize: 13, color: "#8890b0", marginBottom: 28 }}>Results appear automatically when everyone is ready.</div>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "var(--pc-textPrimary)", marginBottom: 8 }}>WAITING FOR THE POD</div>
+            <div style={{ fontSize: 13, color: "var(--pc-textSecondary)", marginBottom: 28 }}>Results appear automatically when everyone is ready.</div>
             <div style={{ display: "inline-block", background: "#c8ccdb", borderRadius: 16, padding: 16, marginBottom: 12 }}>
               <QRCodeSVG value={`https://pod-check.vercel.app/join/${sessionId}`} size={180} bgColor="#c8ccdb" fgColor="#1a1c2e" level="M" />
             </div>

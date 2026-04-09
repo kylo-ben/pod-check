@@ -12,6 +12,36 @@ export const BRACKET_META = {
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+// ─── Theme ────────────────────────────────────────────────────────────────────
+const LIGHT_THEME = {
+  base:          '#9193af',
+  deep:          '#636a91',
+  mid:           '#7d82a2',
+  textPrimary:   '#1a1c2e',
+  textSecondary: '#3d3f5a',
+};
+
+const DARK_THEME = {
+  base:          '#22253a',
+  deep:          '#2e3148',
+  mid:           '#3d3f5a',
+  textPrimary:   '#d4d8eb',
+  textSecondary: '#8890b0',
+};
+
+function applyTheme(theme) {
+  const vars = theme === 'dark' ? DARK_THEME : LIGHT_THEME;
+  const root = document.documentElement.style;
+  Object.entries(vars).forEach(([k, v]) => root.setProperty(`--pc-${k}`, v));
+  root.setProperty(
+    '--pc-bg',
+    theme === 'dark'
+      ? '#22253a'
+      : 'radial-gradient(ellipse at 30% 20%, rgba(177,215,225,0.18) 0%, transparent 60%), radial-gradient(ellipse at 75% 80%, rgba(99,106,145,0.25) 0%, transparent 55%), #9193af'
+  );
+}
+
+// ─── Staples ──────────────────────────────────────────────────────────────────
 const STAPLES = [
   "Sol Ring", "Command Tower", "Arcane Signet", "Mana Vault", "Rhystic Study",
   "Cyclonic Rift", "Demonic Tutor", "Vampiric Tutor", "Birds of Paradise",
@@ -66,7 +96,6 @@ export function SessionCodeCard({ sessionId }) {
 
   return (
     <div onClick={() => navigator.clipboard?.copyText(cardName)} style={{ cursor: "pointer" }}>
-      {/* Card frame */}
       <div style={{
         width: "100%", maxWidth: 300, margin: "0 auto",
         borderRadius: 12, border: `3px solid ${borderColor}`,
@@ -74,45 +103,33 @@ export function SessionCodeCard({ sessionId }) {
         boxShadow: `0 0 32px ${borderColor}40`,
         fontFamily: "serif",
       }}>
-        {/* Name row */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", background:"#aab0c7", borderBottom:"1.5px solid #7d82a2" }}>
           <span style={{ fontSize:16, fontWeight:700, color:"#1a1c2e" }}>{card?.name || "—"}</span>
           <span style={{ fontSize:12, fontWeight:600, color:"#1a1c2e", letterSpacing:1 }}>{manaCost}</span>
         </div>
-        {/* Art */}
         <div style={{ width:"100%", height:180, background:`${borderColor}30`, overflow:"hidden" }}>
           {artUrl
             ? <img src={artUrl} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
             : <div style={{ width:"100%", height:"100%", background:`${borderColor}20` }} />
           }
         </div>
-        {/* Type line */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 12px", background:"#aab0c7", borderTop:"1.5px solid #7d82a2" }}>
           <span style={{ fontSize:13, fontWeight:600, color:"#1a1c2e" }}>{card?.type_line || "—"}</span>
           {card?.set && (
             <img src={`https://svgs.scryfall.io/sets/${card.set}.svg`} alt="" style={{ width:18, height:18, opacity:0.6, filter:"invert(0.3)" }} />
           )}
         </div>
-        {/* Collector line */}
         <div style={{ padding:"3px 12px 6px", background:"#c8ccdb", textAlign:"right" }}>
           <span style={{ fontSize:9, color:"#8890b0", fontFamily:"monospace", letterSpacing:1 }}>
             {sessionId} · POD CHECK
           </span>
         </div>
       </div>
-
-      {/* Card name as join phrase */}
       <div style={{ textAlign:"center", marginTop:12 }}>
-        <div style={{
-          fontFamily:"'Bebas Neue', sans-serif",
-          fontSize:24, letterSpacing:4,
-          color: borderColor,
-          textTransform:"uppercase", lineHeight:1,
-          marginBottom:4,
-        }}>
+        <div style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:24, letterSpacing:4, color: borderColor, textTransform:"uppercase", lineHeight:1, marginBottom:4 }}>
           {card?.name || cardName}
         </div>
-        <div style={{ fontSize:10, color:"#3d3f5a", fontFamily:"monospace", letterSpacing:2 }}>
+        <div style={{ fontSize:10, color:"var(--pc-textSecondary)", fontFamily:"monospace", letterSpacing:2 }}>
           {sessionId}
         </div>
       </div>
@@ -132,18 +149,39 @@ export function emptyPlayer(seat) {
 
 export function newSession(id, mode = 'podcheck') {
   const players = [0, 1, 2, 3].map(emptyPlayer);
-  players[0].status = "pending";
   return { id, createdAt: new Date().toISOString(), players, game: null, mode, cardName: stapleForSession(id) };
 }
 
+// ─── PageWrapper ──────────────────────────────────────────────────────────────
 export function PageWrapper({ children, style = {} }) {
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('podcheck-theme') || 'light';
+    applyTheme(saved);
+    return saved;
+  });
+
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    localStorage.setItem('podcheck-theme', next);
+    setTheme(next);
+  };
+
   return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 30% 20%, rgba(177,215,225,0.18) 0%, transparent 60%), radial-gradient(ellipse at 75% 80%, rgba(99,106,145,0.25) 0%, transparent 55%), #9193af", color: "#d4d8eb", fontFamily: "'DM Mono', monospace", ...style }}>
+    <div style={{ minHeight: "100vh", background: "var(--pc-bg)", color: "var(--pc-textPrimary)", fontFamily: "'DM Mono', monospace", position: "relative", ...style }}>
+      <button
+        onClick={toggleTheme}
+        style={{ position: "fixed", top: 14, right: 16, background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#8890b0", zIndex: 1000, fontFamily: "inherit", padding: 0, lineHeight: 1 }}
+        aria-label="Toggle theme"
+      >
+        {theme === 'light' ? '☽' : '☀'}
+      </button>
       {children}
     </div>
   );
 }
 
+// ─── ScryCheckCredit ──────────────────────────────────────────────────────────
 export function ScryCheckCredit() {
   return (
     <div style={{ textAlign: "center", padding: "24px 16px", borderTop: "1px solid rgba(26,28,46,0.2)", fontSize: 11, color: "#8890b0", lineHeight: 1.8 }}>
@@ -155,13 +193,14 @@ export function ScryCheckCredit() {
         {" "}— the best Commander power level tool out there.
       </div>
       <div style={{ opacity: 0.6 }}>Pod Check is an unofficial fan app. Not affiliated with ScryCheck or Wizards of the Coast.</div>
-      <div style={{ marginTop: 8, fontSize: 10, color: "#3d3f5a" }}>
+      <div style={{ marginTop: 8, fontSize: 10 }}>
         <a href="https://github.com/kylo-ben/pod-check/issues/new?template=bug_report.md&title=[BUG]%20" target="_blank" rel="noopener noreferrer" style={{ color: "#4c819c", textDecoration: "none" }}>report a bug</a>
       </div>
     </div>
   );
 }
 
+// ─── Logo ─────────────────────────────────────────────────────────────────────
 export function Logo({ size = "md" }) {
   const fontSize = size === "lg" ? 40 : size === "sm" ? 20 : 28;
   const sub = size === "lg" ? 13 : 10;
@@ -179,6 +218,7 @@ export function Logo({ size = "md" }) {
   );
 }
 
+// ─── SessionCode ──────────────────────────────────────────────────────────────
 export function SessionCode({ code }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
