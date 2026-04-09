@@ -12,92 +12,109 @@ export const BRACKET_META = {
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-export function sessionCard(id) {
+const STAPLES = [
+  "Sol Ring", "Command Tower", "Arcane Signet", "Mana Vault", "Rhystic Study",
+  "Cyclonic Rift", "Demonic Tutor", "Vampiric Tutor", "Birds of Paradise",
+  "Swords to Plowshares", "Force of Will", "Swan Song", "Smothering Tithe",
+  "Dark Ritual", "Fierce Guardianship", "Mystical Tutor", "Enlightened Tutor",
+  "Gamble", "Esper Sentinel", "Ragavan, Nimble Pilferer", "Grand Abolisher",
+  "Thassa's Oracle", "Orcish Bowmasters", "Grim Monolith", "Chrome Mox",
+  "Mox Diamond", "Lion's Eye Diamond", "Lotus Petal", "Crop Rotation",
+  "Chain of Vapor", "Cavern of Souls", "Silence", "Underworld Breach",
+  "Demonic Consultation", "Diabolic Intent", "Finale of Devastation",
+  "Brain Freeze", "Fellwar Stone", "Wishclaw Talisman", "Faerie Mastermind",
+  "Ranger-Captain of Eos", "Delighted Halfling", "Boseiju, Who Endures",
+  "Pact of Negation", "Force of Negation", "Flusterstorm", "Mental Misstep",
+  "Mindbreak Trap", "Tainted Pact", "Deflecting Swat", "The One Ring",
+  "Imperial Seal", "Gaea's Cradle", "Ancient Tomb", "Mana Confluence",
+  "Misty Rainforest", "Scalding Tarn", "Flooded Strand", "Polluted Delta",
+  "Verdant Catacombs", "Bloodstained Mire", "Wooded Foothills", "Windswept Heath",
+  "Marsh Flats", "Arid Mesa", "City of Brass", "Exotic Orchard",
+  "Gemstone Caverns", "Mox Amber", "Mox Opal", "Otawara, Soaring City",
+  "Mystic Remora", "An Offer You Can't Refuse", "Rite of Flame",
+  "Simian Spirit Guide", "Elvish Spirit Guide", "Cabal Ritual",
+  "Jeska's Will", "Hexing Squelcher", "Borne Upon a Wind", "Into the Flood Maw",
+  "Voice of Victory", "Mockingbird", "Red Elemental Blast", "Watery Grave",
+  "Volcanic Island", "Underground Sea", "Tropical Island", "Tundra", "Scrubland",
+  "City of Traitors",
+];
+
+export function stapleForSession(id) {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-
-  const COSTS  = ["W","U","B","R","G","1W","1U","1B","1R","1G","2","3","XR","XG","WU","UB","BR","RG","GW","WB"];
-  const COLS   = ["white","blue","black","red","green","azorius","dimir","rakdos","gruul","selesnya","orzhov","izzet","golgari","boros","simic","esper","grixis","jund","naya","bant"];
-  const TYPES  = ["Instant","Sorcery","Creature","Enchantment","Artifact","Instant","Sorcery","Creature","Instant","Sorcery"];
-
-  const cost  = COSTS[h % COSTS.length];
-  const color = COLS[(h >>> 4) % COLS.length];
-  const type  = TYPES[(h >>> 9) % TYPES.length];
-  return { cost, color, type, code: id };
+  return STAPLES[h % STAPLES.length];
 }
 
-const BORDER_COLOR = {
-  white:"#f9fafb", blue:"#3b82f6", black:"#6b7280", red:"#ef4444", green:"#22c55e",
-  azorius:"#93c5fd", dimir:"#7c3aed", rakdos:"#dc2626", gruul:"#f97316", selesnya:"#86efac",
-  orzhov:"#d1d5db", izzet:"#818cf8", golgari:"#4ade80", boros:"#fb923c", simic:"#34d399",
-  esper:"#c4b5fd", grixis:"#a78bfa", jund:"#f59e0b", naya:"#fde68a", bant:"#6ee7b7",
-};
-
-const COLOR_EMOJI = {
-  white:"☀️", blue:"💧", black:"💀", red:"🔥", green:"🌿",
-  azorius:"🌊", dimir:"🌑", rakdos:"👹", gruul:"🐗", selesnya:"🌳",
-  orzhov:"⚖️", izzet:"⚡", golgari:"🍄", boros:"⚔️", simic:"🧬",
-  esper:"🔮", grixis:"💜", jund:"🌋", naya:"🦁", bant:"🛡️",
-};
-
-const SCRYFALL_COLOR = {
-  white:"w", blue:"u", black:"b", red:"r", green:"g",
-  azorius:"wu", dimir:"ub", rakdos:"br", gruul:"rg", selesnya:"gw",
-  orzhov:"wb", izzet:"ur", golgari:"bg", boros:"rw", simic:"ug",
-  esper:"wub", grixis:"ubr", jund:"brg", naya:"rwg", bant:"wug",
-};
-
 export function SessionCodeCard({ sessionId }) {
-  const card = sessionCard(sessionId);
-  const [artUrl, setArtUrl] = useState(null);
+  const cardName = stapleForSession(sessionId);
+  const [card, setCard] = useState(null);
 
   useEffect(() => {
-    const c = SCRYFALL_COLOR[card.color] || "w";
-    const t = card.type.toLowerCase();
-    fetch(`https://api.scryfall.com/cards/random?q=c%3D${c}+t%3A${t}`, {
-      headers: { "User-Agent": "PodCheck/1.0 (pod-check.vercel.app)" },
-    })
+    fetch(
+      `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(cardName)}`,
+      { headers: { "User-Agent": "PodCheck/1.0 (pod-check.vercel.app)" } }
+    )
       .then(r => r.json())
-      .then(data => {
-        const url = data.image_uris?.art_crop || data.card_faces?.[0]?.image_uris?.art_crop;
-        if (url) setArtUrl(url);
-      })
+      .then(d => { if (d.object === "card") setCard(d); })
       .catch(() => {});
-  }, [card.color, card.type]);
+  }, [cardName]);
 
-  const border = BORDER_COLOR[card.color] || "#a78bfa";
+  const artUrl = card?.image_uris?.art_crop || card?.card_faces?.[0]?.image_uris?.art_crop;
+  const identity = card?.color_identity?.[0];
+  const borderColor = { W:"#f9fafb", U:"#60a5fa", B:"#9ca3af", R:"#f87171", G:"#4ade80" }[identity] || "#a78bfa";
+  const manaCost = card?.mana_cost?.replace(/[{}]/g, "").trim() || "";
 
   return (
-    <div style={{
-      width: "100%", maxWidth: 340, margin: "0 auto",
-      borderRadius: 16, border: `3px solid ${border}`,
-      background: "#f5f0e8", overflow: "hidden",
-      boxShadow: `0 0 32px ${border}40`,
-      fontFamily: "serif",
-    }}>
-      {/* Name bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px 6px", background: "#ede8dc" }}>
-        <span style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>{sessionId}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "#1a1a1a", background: border, borderRadius: "50%", width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center" }}>{card.cost}</span>
+    <div onClick={() => navigator.clipboard?.writeText(cardName)} style={{ cursor: "pointer" }}>
+      {/* Card frame */}
+      <div style={{
+        width: "100%", maxWidth: 300, margin: "0 auto",
+        borderRadius: 12, border: `3px solid ${borderColor}`,
+        background: "#e8e0d0", overflow: "hidden",
+        boxShadow: `0 0 32px ${borderColor}40`,
+        fontFamily: "serif",
+      }}>
+        {/* Name row */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", background:"#d8cfc0", borderBottom:"1.5px solid #b8ae98" }}>
+          <span style={{ fontSize:16, fontWeight:700, color:"#1a1a1a" }}>{card?.name || "—"}</span>
+          <span style={{ fontSize:12, fontWeight:600, color:"#1a1a1a", letterSpacing:1 }}>{manaCost}</span>
+        </div>
+        {/* Art */}
+        <div style={{ width:"100%", height:180, background:`${borderColor}30`, overflow:"hidden" }}>
+          {artUrl
+            ? <img src={artUrl} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            : <div style={{ width:"100%", height:"100%", background:`${borderColor}20` }} />
+          }
+        </div>
+        {/* Type line */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 12px", background:"#d8cfc0", borderTop:"1.5px solid #b8ae98" }}>
+          <span style={{ fontSize:13, fontWeight:600, color:"#1a1a1a" }}>{card?.type_line || "—"}</span>
+          {card?.set && (
+            <img src={`https://svgs.scryfall.io/sets/${card.set}.svg`} alt="" style={{ width:18, height:18, opacity:0.6, filter:"invert(0.3)" }} />
+          )}
+        </div>
+        {/* Collector line */}
+        <div style={{ padding:"3px 12px 6px", background:"#e8e0d0", textAlign:"right" }}>
+          <span style={{ fontSize:9, color:"#999", fontFamily:"monospace", letterSpacing:1 }}>
+            {sessionId} · POD CHECK
+          </span>
+        </div>
       </div>
 
-      {/* Art frame */}
-      <div style={{ margin: "0 10px", height: 200, background: "#ccc", overflow: "hidden" }}>
-        {artUrl
-          ? <img src={artUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-          : <div style={{ width: "100%", height: "100%", background: `${border}30` }} />
-        }
-      </div>
-
-      {/* Type line */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 12px", background: "#ede8dc" }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{card.type}</span>
-        <span style={{ fontSize: 16 }}>{COLOR_EMOJI[card.color] || "✦"}</span>
-      </div>
-
-      {/* Collector number */}
-      <div style={{ padding: "4px 12px 8px", background: "#f5f0e8", textAlign: "right" }}>
-        <span style={{ fontSize: 9, color: "#888", fontFamily: "monospace", letterSpacing: 1 }}>{sessionId} · POD CHECK</span>
+      {/* Card name as join phrase */}
+      <div style={{ textAlign:"center", marginTop:12 }}>
+        <div style={{
+          fontFamily:"'Bebas Neue', sans-serif",
+          fontSize:24, letterSpacing:4,
+          color: borderColor,
+          textTransform:"uppercase", lineHeight:1,
+          marginBottom:4,
+        }}>
+          {card?.name || cardName}
+        </div>
+        <div style={{ fontSize:10, color:"#334155", fontFamily:"monospace", letterSpacing:2 }}>
+          {sessionId}
+        </div>
       </div>
     </div>
   );
@@ -114,7 +131,7 @@ export function emptyPlayer(seat) {
 }
 
 export function newSession(id, mode = 'podcheck') {
-  return { id, createdAt: new Date().toISOString(), players: [0, 1, 2, 3].map(emptyPlayer), game: null, mode };
+  return { id, createdAt: new Date().toISOString(), players: [0, 1, 2, 3].map(emptyPlayer), game: null, mode, cardName: stapleForSession(id) };
 }
 
 export function PageWrapper({ children, style = {} }) {

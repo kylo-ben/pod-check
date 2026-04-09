@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
-import { COLORS, BRACKET_META, PageWrapper, ScryCheckCredit, Logo, SessionCodeCard } from "../lib/ui.jsx";
+import { QRCodeSVG } from 'qrcode.react';
+import { COLORS, BRACKET_META, PageWrapper, ScryCheckCredit, Logo } from "../lib/ui.jsx";
 
 const STATUS_COLORS = {
   empty: "#334155", pending: "#60a5fa", analyzing: "#fbbf24", ready: "#34d399",
@@ -101,7 +102,7 @@ export default function HostPage() {
     return () => supabase.removeChannel(ch);
   }, [session?.id, sessionId]);
 
-  const joinUrl = `${window.location.origin}/join/${sessionId}`;
+  const joinUrl = `https://pod-check.vercel.app/join/${sessionId}`;
 
   const handleShare = useCallback(() => {
     if (navigator.share) {
@@ -185,15 +186,11 @@ export default function HostPage() {
             <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, textAlign: "center", marginBottom: 10 }}>
               {allReady ? "SESSION CODE" : "SHARE THIS CODE WITH YOUR POD"}
             </div>
-            <div onClick={() => navigator.clipboard?.writeText(sessionId)} style={{ cursor: "pointer" }}>
-              <SessionCodeCard sessionId={sessionId} />
+            <div style={{ background: '#0e0a1f', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+              <QRCodeSVG value={joinUrl} size={180} bgColor="transparent" fgColor="#e0f2ff" />
+              <div style={{ color: '#a78bfa', fontFamily: 'IBM Plex Mono', fontSize: '12px', letterSpacing: '0.1em' }}>OR ENTER CODE</div>
+              <div style={{ color: '#00c9ff', fontFamily: 'Bebas Neue', fontSize: '48px', letterSpacing: '0.05em' }}>{sessionId}</div>
             </div>
-
-            {!allReady && (
-              <div style={{ fontSize: 11, color: "#475569", textAlign: "center", marginTop: 10, lineHeight: 1.8 }}>
-                Players go to <strong style={{ color: "#94a3b8" }}>pod-check.vercel.app</strong> and enter the code
-              </div>
-            )}
           </div>
         )}
 

@@ -25,15 +25,35 @@ export default function LandingPage() {
   }, [navigate]);
 
   const joinByCode = useCallback(async () => {
-    const clean = code.trim().toUpperCase();
-    if (clean.length < 4) { setCodeError("Enter a 5-character session code."); return; }
+    const clean = code.trim();
+    if (!clean) return;
     setChecking(true); setCodeError(null);
-    const { data, error } = await supabase.from("sessions").select("id").eq("id", clean).single();
-    if (error || !data) {
-      setCodeError("Session not found. Check the code and try again.");
-      setChecking(false); return;
+
+    const isPhrase = clean.length > 5 || clean.includes(" ");
+
+    if (isPhrase) {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id, data")
+        .ilike("data->>'cardName'", `%${clean}%`)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (error || !data) {
+        setCodeError("Card not found. Check the name and try again.");
+        setChecking(false); return;
+      }
+      navigate(`/join/${data.id}`);
+    } else {
+      const upper = clean.toUpperCase();
+      const { data, error } = await supabase.from("sessions").select("id").eq("id", upper).single();
+      if (error || !data) {
+        setCodeError("Session not found. Check the code and try again.");
+        setChecking(false); return;
+      }
+      navigate(`/join/${upper}`);
     }
-    navigate(`/join/${clean}`);
+    setChecking(false);
   }, [code, navigate]);
 
   return (
@@ -48,7 +68,6 @@ export default function LandingPage() {
           <Logo size="lg" />
 
           <p style={{ color: "#475569", fontSize: 13, textAlign: "center", lineHeight: 1.8, marginTop: -8 }}>
-            Power balance check for your Commander pod.<br />
             Powered by <a href="https://scrycheck.com" target="_blank" rel="noopener noreferrer" style={{ color: "#a78bfa", textDecoration: "none" }}>ScryCheck</a>.
           </p>
 
@@ -84,14 +103,12 @@ export default function LandingPage() {
             <input
               value={code}
               onChange={e => {
-                // Auto-uppercase, strip ambiguous chars as you type
-                const val = e.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "").slice(0, 5);
-                setCode(val);
+                setCode(e.target.value);
                 setCodeError(null);
               }}
-              onKeyDown={e => e.key === "Enter" && code.length >= 4 && joinByCode()}
-              placeholder="ENTER CODE"
-              maxLength={5}
+              onKeyDown={e => e.key === "Enter" && code.trim() && joinByCode()}
+              placeholder="SOL RING"
+              maxLength={30}
               style={{
                 width: "100%",
                 background: "rgba(255,255,255,0.05)",
@@ -110,15 +127,15 @@ export default function LandingPage() {
             {codeError && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 10, textAlign: "center" }}>{codeError}</div>}
             <button
               onClick={joinByCode}
-              disabled={checking || code.length < 4}
+              disabled={checking || !code.trim()}
               style={{
                 width: "100%",
-                background: code.length >= 4 ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${code.length >= 4 ? "rgba(167,139,250,0.3)" : "rgba(255,255,255,0.08)"}`,
+                background: code.trim() ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${code.trim() ? "rgba(167,139,250,0.3)" : "rgba(255,255,255,0.08)"}`,
                 borderRadius: 12, padding: "14px",
-                color: code.length >= 4 ? "#a78bfa" : "#334155",
+                color: code.trim() ? "#a78bfa" : "#334155",
                 fontSize: 13, fontWeight: 700, fontFamily: "'DM Mono', monospace",
-                cursor: code.length >= 4 ? "pointer" : "not-allowed", letterSpacing: 1,
+                cursor: code.trim() ? "pointer" : "not-allowed", letterSpacing: 1,
                 transition: "all 0.2s",
               }}
             >
