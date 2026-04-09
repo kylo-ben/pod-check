@@ -15,7 +15,7 @@ function VectorBar({ label, value, color }) {
         <span>{label}</span>
         <span>{value}</span>
       </div>
-      <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 3, height: 5, overflow: "hidden" }}>
+      <div style={{ background: "rgba(26,28,46,0.2)", borderRadius: 3, height: 5, overflow: "hidden" }}>
         <div
           style={{
             width: `${value}%`,
@@ -39,8 +39,8 @@ export default function PlayerCard({ player, index, showResult = false, highligh
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: `1px solid ${highlight ? color + "60" : "rgba(255,255,255,0.08)"}`,
+        background: "rgba(26,28,46,0.12)",
+        border: `1px solid ${highlight ? color + "60" : "rgba(26,28,46,0.2)"}`,
         borderRadius: 14,
         padding: 16,
         opacity: cfg.dim ? 0.4 : 1,
@@ -76,13 +76,13 @@ export default function PlayerCard({ player, index, showResult = false, highligh
             {index + 1}
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: player.name ? "#e2e8f0" : "#334155" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: player.name ? "#d4d8eb" : "#3d3f5a" }}>
               {player.name || `Seat ${index + 1}`}
               {player.deckData?.offline && <span style={{ fontSize: 11, marginLeft: 5 }}>📵</span>}
-              {player.deckData?.selfReported && !player.deckData?.offline && <span style={{ fontSize: 9, color: "#475569", marginLeft: 5 }}>· self-reported</span>}
+              {player.deckData?.selfReported && !player.deckData?.offline && <span style={{ fontSize: 9, color: "#8890b0", marginLeft: 5 }}>· self-reported</span>}
             </div>
             {showResult && player.deckData?.commander && (
-              <div style={{ fontSize: 10, color: "#64748b", marginTop: 1 }}>{player.deckData.commander}</div>
+              <div style={{ fontSize: 10, color: "#8890b0", marginTop: 1 }}>{player.deckData.commander}</div>
             )}
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function PlayerCard({ player, index, showResult = false, highligh
               </span>
             )}
             {player.deckData.tier && (
-              <span style={{ fontSize: 10, color: "#64748b" }}>{player.deckData.tier}</span>
+              <span style={{ fontSize: 10, color: "#8890b0" }}>{player.deckData.tier}</span>
             )}
           </div>
 
@@ -157,12 +157,12 @@ export default function PlayerCard({ player, index, showResult = false, highligh
           {(player.deckData.combos > 0 || player.deckData.gameChangers > 0) && (
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
               {player.deckData.combos > 0 && (
-                <span style={{ fontSize: 10, color: "#f87171", background: "rgba(248,113,113,0.1)", borderRadius: 4, padding: "2px 7px" }}>
+                <span style={{ fontSize: 10, color: "#c45c6a", background: "rgba(196,92,106,0.1)", borderRadius: 4, padding: "2px 7px" }}>
                   {player.deckData.combos} combo{player.deckData.combos !== 1 ? "s" : ""}
                 </span>
               )}
               {player.deckData.gameChangers > 0 && (
-                <span style={{ fontSize: 10, color: "#fbbf24", background: "rgba(251,191,36,0.1)", borderRadius: 4, padding: "2px 7px" }}>
+                <span style={{ fontSize: 10, color: "#c4915a", background: "rgba(196,145,90,0.1)", borderRadius: 4, padding: "2px 7px" }}>
                   {player.deckData.gameChangers} game changer{player.deckData.gameChangers !== 1 ? "s" : ""}
                 </span>
               )}
@@ -179,9 +179,9 @@ export default function PlayerCard({ player, index, showResult = false, highligh
                 display: "inline-block",
                 marginTop: 10,
                 fontSize: 10,
-                color: "#475569",
+                color: "#8890b0",
                 textDecoration: "none",
-                borderBottom: "1px solid rgba(71,85,105,0.4)",
+                borderBottom: "1px solid rgba(136,144,176,0.4)",
               }}
             >
               View full analysis on ScryCheck ↗
@@ -195,9 +195,9 @@ export default function PlayerCard({ player, index, showResult = false, highligh
 
 function getStatusColor(status) {
   return {
-    empty:     "#334155",
-    pending:   "#60a5fa",
-    analyzing: "#fbbf24",
-    ready:     "#34d399",
-  }[status] ?? "#334155";
+    empty:     "#3d3f5a",
+    pending:   "#7ba7bb",
+    analyzing: "#c4915a",
+    ready:     "#5aaa88",
+  }[status] ?? "#3d3f5a";
 }
