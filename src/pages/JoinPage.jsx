@@ -623,7 +623,12 @@ export default function JoinPage() {
             <div style={{ display: "inline-block", background: "#e0f2ff", borderRadius: 16, padding: 16, marginBottom: 12 }}>
               <QRCodeSVG value={`https://pod-check.vercel.app/join/${sessionId}`} size={180} bgColor="#e0f2ff" fgColor="#06040f" level="M" />
             </div>
-            <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, marginBottom: 28 }}>SCAN TO JOIN · {sessionId}</div>
+            <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, marginBottom: 28 }}>
+              SCAN TO JOIN ·{" "}
+              <span style={{ color: "#00c9ff", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 4 }}>
+                {sessionId}
+              </span>
+            </div>
             <div style={{ width: 44, height: 44, border: "3px solid rgba(167,139,250,0.2)", borderTop: "3px solid #a78bfa", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 28px" }} />
             <MtgFact />
             <LobbyStatus session={session} mySeat={mySeat} />

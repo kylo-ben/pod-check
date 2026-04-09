@@ -131,7 +131,9 @@ export function emptyPlayer(seat) {
 }
 
 export function newSession(id, mode = 'podcheck') {
-  return { id, createdAt: new Date().toISOString(), players: [0, 1, 2, 3].map(emptyPlayer), game: null, mode, cardName: stapleForSession(id) };
+  const players = [0, 1, 2, 3].map(emptyPlayer);
+  players[0].status = "pending";
+  return { id, createdAt: new Date().toISOString(), players, game: null, mode, cardName: stapleForSession(id) };
 }
 
 export function PageWrapper({ children, style = {} }) {
