@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import { COLORS, BRACKET_META, PageWrapper, Logo, SessionCodeCard } from "../lib/ui.jsx";
+import { QRCodeSVG } from "qrcode.react";
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 function decodeEntities(str) {
@@ -619,9 +620,10 @@ export default function JoinPage() {
             <div style={{ fontSize: 11, color: "#34d399", letterSpacing: 2, marginBottom: 20 }}>✓ DECK SUBMITTED</div>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "#e0f2ff", marginBottom: 8 }}>WAITING FOR THE POD</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 28 }}>Results appear automatically when everyone is ready.</div>
-            <div style={{ marginBottom: 24 }}>
-              <SessionCodeCard sessionId={sessionId} />
+            <div style={{ display: "inline-block", background: "#e0f2ff", borderRadius: 16, padding: 16, marginBottom: 12 }}>
+              <QRCodeSVG value={`https://pod-check.vercel.app/join/${sessionId}`} size={180} bgColor="#e0f2ff" fgColor="#06040f" level="M" />
             </div>
+            <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, marginBottom: 28 }}>SCAN TO JOIN · {sessionId}</div>
             <div style={{ width: 44, height: 44, border: "3px solid rgba(167,139,250,0.2)", borderTop: "3px solid #a78bfa", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 28px" }} />
             <MtgFact />
             <LobbyStatus session={session} mySeat={mySeat} />

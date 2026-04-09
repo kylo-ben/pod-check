@@ -107,7 +107,7 @@ export default function LandingPage() {
                 setCodeError(null);
               }}
               onKeyDown={e => e.key === "Enter" && code.trim() && joinByCode()}
-              placeholder="SOL RING"
+              placeholder="ENTER CODE"
               maxLength={30}
               style={{
                 width: "100%",
