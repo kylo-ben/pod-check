@@ -18,7 +18,7 @@ export default function LandingPage() {
       const data = newSession(id, 'podcheck');
       const { error: err } = await supabase.from("sessions").insert({ id, data });
       if (err) throw err;
-      navigate(`/host/${id}`);
+      navigate(`/join/${id}?host=1`);
     } catch (e) {
       setError(e.message || "Failed to create session.");
     } finally { setCreating(false); }

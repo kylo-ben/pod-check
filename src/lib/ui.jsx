@@ -119,6 +119,7 @@ export function emptyPlayer(seat) {
 
 export function newSession(id, mode = 'podcheck') {
   const players = [0, 1, 2, 3].map(emptyPlayer);
+  players[0].status = "pending";
   return { id, createdAt: new Date().toISOString(), players, game: null, mode, cardName: stapleForSession(id) };
 }
 

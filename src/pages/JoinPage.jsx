@@ -452,7 +452,7 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
                       onKeyDown={e => e.key === "Enter" && resultInput.trim() && handleResultUrl(resultInput)}
                       placeholder="https://scrycheck.com/deck/..."
                       autoFocus
-                      style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: `1px solid ${error ? "#c45c6a" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, padding: "10px 12px", color: "#e0f2ff", fontSize: 12, fontFamily: "inherit" }}
+                      style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: `1px solid ${error ? "#c45c6a" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, padding: "10px 12px", color: "#e0f2ff", fontSize: 16, fontFamily: "inherit" }}
                     />
                     <button
                       onClick={() => resultInput.trim() && handleResultUrl(resultInput)}
@@ -621,8 +621,8 @@ export default function JoinPage() {
             <div style={{ fontSize: 11, color: "#5aaa88", letterSpacing: 2, marginBottom: 20 }}>✓ DECK SUBMITTED</div>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "#e0f2ff", marginBottom: 8 }}>WAITING FOR THE POD</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 28 }}>Results appear automatically when everyone is ready.</div>
-            <div style={{ display: "inline-block", background: "#e0f2ff", borderRadius: 16, padding: 16, marginBottom: 12 }}>
-              <QRCodeSVG value={`https://pod-check.vercel.app/join/${sessionId}`} size={180} bgColor="#e0f2ff" fgColor="#1a2744" level="M" />
+            <div style={{ display: "inline-block", background: "#ffffff", borderRadius: 16, padding: 16, marginBottom: 12 }}>
+              <QRCodeSVG value={`https://pod-check.vercel.app/join/${sessionId}`} size={180} bgColor="#ffffff" fgColor="#000000" level="M" />
             </div>
             <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, marginBottom: 28 }}>
               SCAN TO JOIN ·{" "}
