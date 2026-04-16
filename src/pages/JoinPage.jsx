@@ -70,7 +70,7 @@ function StepBar({ current, total }) {
 }
 
 // ─── BigVerdict ───────────────────────────────────────────────────────────────
-function BigVerdict({ players }) {
+function BigVerdict({ players, mySeat, onResubmit }) {
   const allReady = players.filter(p => p.status === "ready");
   const online = allReady.filter(p => p.deckData?.power != null);
   if (online.length < 2) return null;
@@ -139,6 +139,14 @@ function BigVerdict({ players }) {
                 {hasPower ? p.deckData.power.toFixed(1) : "—"}
               </div>
               {bMeta && <div style={{ fontSize: 10, color: bMeta.color, width: 28, textAlign: "right" }}>B{p.deckData.bracket}</div>}
+              {oi === mySeat && onResubmit && (
+                <button
+                  onClick={onResubmit}
+                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 4, padding: "2px 8px", fontSize: 9, color: "#475569", cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, flexShrink: 0 }}
+                >
+                  RE-SUBMIT
+                </button>
+              )}
             </div>
           );
         })}
@@ -565,6 +573,15 @@ export default function JoinPage() {
     setSession(updated);
   }, [session, mySeat, sessionId]);
 
+  const handleResubmit = useCallback(async () => {
+    const updated = { ...session, players: session.players.map((p, i) =>
+      i === mySeat ? { ...p, status: "pending", deckData: null, agreed: false } : p
+    )};
+    await supabase.from("sessions").update({ data: updated }).eq("id", sessionId);
+    setSession(updated);
+    setStep(3);
+  }, [session, mySeat, sessionId]);
+
 
   if (loadError) return (
     <PageWrapper>
@@ -638,7 +655,7 @@ export default function JoinPage() {
 
         {step === 5 && (
           <div style={{ animation: "fadeUp 0.5s ease both" }}>
-            <BigVerdict players={session.players} mode={session.mode} />
+            <BigVerdict players={session.players} mode={session.mode} mySeat={mySeat} onResubmit={handleResubmit} />
             <div style={{ textAlign: "center", marginTop: 24 }}>
               <button onClick={() => navigate("/")} style={{ ...btnStyle, background: "rgba(255,255,255,0.08)", color: "#e0f2ff", width: "100%" }}>
                 DONE — BACK TO HOME

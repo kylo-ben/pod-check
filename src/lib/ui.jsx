@@ -125,7 +125,7 @@ export function newSession(id, mode = 'podcheck') {
 
 export function PageWrapper({ children, style = {} }) {
   return (
-    <div style={{ minHeight: "100vh", background: "#1a2744", color: "#e0f2ff", fontFamily: "'DM Mono', monospace", ...style }}>
+    <div style={{ minHeight: "100vh", background: "#1a2744", color: "#e0f2ff", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", ...style }}>
       {children}
     </div>
   );

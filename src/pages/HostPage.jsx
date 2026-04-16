@@ -185,7 +185,7 @@ export default function HostPage() {
               <div style={{ background: "#ffffff", padding: 12, borderRadius: 8, display: "inline-block" }}>
                 <QRCodeSVG value={joinUrl} size={180} bgColor="#ffffff" fgColor="#000000" />
               </div>
-              <div style={{ color: '#b8a8d8', fontFamily: 'IBM Plex Mono', fontSize: '12px', letterSpacing: '0.1em' }}>OR ENTER CODE</div>
+              <div style={{ color: '#b8a8d8', fontSize: '12px', letterSpacing: '0.1em' }}>OR ENTER CODE</div>
               <div style={{ color: '#b1d7e1', fontFamily: 'Bebas Neue', fontSize: '48px', letterSpacing: '0.05em' }}>{sessionId}</div>
             </div>
           </div>
