@@ -567,6 +567,17 @@ export default function JoinPage() {
     setStep(4);
   }, [session, mySeat, sessionId]);
 
+  // If the shell pre-loaded deck data was passed via router state, skip ThreeBarOnboarding
+  // and submit immediately when we reach step 3 (seat claimed, session ready).
+  const autoJoinedRef = useRef(false);
+  useEffect(() => {
+    if (step !== 3 || mySeat === null || autoJoinedRef.current) return;
+    const deckData = location.state?.deckData;
+    if (!deckData) return;
+    autoJoinedRef.current = true;
+    handleThreeBarComplete(deckData);
+  }, [step, mySeat, handleThreeBarComplete]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleAgree = useCallback(async () => {
     const updated = { ...session, players: session.players.map((p, i) => i === mySeat ? { ...p, agreed: true } : p) };
     await supabase.from("sessions").update({ data: updated }).eq("id", sessionId);
