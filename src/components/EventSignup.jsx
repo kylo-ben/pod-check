@@ -96,10 +96,12 @@ export default function EventSignup({ code, event, variant = "self", onDone, onC
   return (
     <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: 16, marginBottom: 16 }}>
       <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 20, letterSpacing: 1, color: t.ink, marginBottom: 4 }}>
-        {isWalkin ? "ADD A WALK-IN" : "JOIN THIS EVENT"}
+        {isWalkin ? "SEAT A WALK-IN" : "PULL UP A CHAIR"}
       </div>
       <div style={{ fontSize: 12, color: t.dim, lineHeight: 1.6, marginBottom: 14 }}>
-        {isWalkin ? "Paste their ScryCheck deck URL." : "Paste your ScryCheck deck URL — that's how you enter the lobby."}
+        {isWalkin
+          ? "Drop in their ScryCheck deck link and we'll seat them at a fair table."
+          : "Drop in your ScryCheck deck link — it's just so we can build fair pods, never a power check."}
       </div>
 
       {error && (
