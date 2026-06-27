@@ -71,7 +71,26 @@ export function takenTiebreaks(players, commander, excludeId = null) {
 }
 
 export function displayName(player) {
-  return player.tiebreak ? `${player.commander} ${player.tiebreak}` : player.commander;
+  return player.tiebreak && !isColorTiebreak(player.tiebreak)
+    ? `${player.commander} ${player.tiebreak}`
+    : player.commander;
+}
+
+// Tiebreak options: emoji OR color (never numbers/letters/names). Colors are
+// intentional player-identity values, not theme chrome — like the WUBRG map.
+export const TIEBREAK_EMOJIS = ["🔥", "🌊", "🌿", "⚡", "💀", "🌟", "🍀", "🩸", "👑", "🎲", "🐉", "🦅"];
+export const TIEBREAK_COLORS = ["#c0392b", "#2563eb", "#16a34a", "#d97706", "#7c3aed", "#0891b2"];
+
+export const isColorTiebreak = (tb) => typeof tb === "string" && tb.startsWith("#");
+
+// First unused option, for auto-distinguishing a peer who joined while unique.
+export function firstFreeTiebreak(taken) {
+  const used = new Set(taken);
+  return (
+    TIEBREAK_EMOJIS.find((e) => !used.has(e)) ??
+    TIEBREAK_COLORS.find((c) => !used.has(c)) ??
+    null
+  );
 }
 
 // ── Pod assignment ────────────────────────────────────────────────────────────

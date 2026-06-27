@@ -1,5 +1,6 @@
 import { useTheme } from "../theme/ThemeContext.jsx";
-import { displayName, MAX_POD } from "../lib/pods.js";
+import { MAX_POD } from "../lib/pods.js";
+import Identity from "./Identity.jsx";
 
 function useTokens() {
   const { theme, mode } = useTheme();
@@ -37,9 +38,7 @@ export default function PodCard({ index, members, children }) {
 
       {members.map((m) => (
         <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${t.border}` }}>
-          <span style={{ fontSize: 13, color: t.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {displayName(m)}
-          </span>
+          <Identity player={m} color={t.ink} />
           <span style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, color: t.dim, flexShrink: 0, marginLeft: 8 }}>
             {m.bracket != null ? `B${m.bracket}` : "—"}
           </span>
