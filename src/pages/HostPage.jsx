@@ -70,7 +70,7 @@ function BalanceSummary({ players }) {
   if (spread <= 0.8 && bracketSpread <= 1) { verdict = "FAIR GAME"; emoji = "⚖️"; sub = "Power levels are well matched."; }
   else if (spread <= 1.5 || bracketSpread <= 1) { verdict = "SLIGHT GAP"; emoji = "🟡"; sub = "Minor difference — totally playable."; }
   else if (spread <= 2.5) { verdict = "NOTABLE MISMATCH"; emoji = "⚠️"; sub = "Worth a bracket conversation."; }
-  else { verdict = "BAD IDEA"; emoji = "🔴"; sub = "Significant gap — someone swap decks."; }
+  else { verdict = "WIDE GAP"; emoji = "🔴"; sub = "Big spread — a deck swap would even it out."; }
 
   return (
     <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: "20px", textAlign: "center", marginBottom: 20, animation: "fadeUp 0.4s ease both" }}>
