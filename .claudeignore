@@ -1,0 +1,47 @@
+# .claudeignore — Cardstock Apps
+# Tells Claude Code what to skip when reading context.
+# Reduces RAM usage and speeds up sessions on low-power hardware.
+
+# Dependencies (never need to read these)
+node_modules/
+.pnp
+.pnp.js
+
+# Build output (generated, not source of truth)
+dist/
+build/
+.next/
+out/
+
+# Vercel internals
+.vercel/
+
+# Supabase local dev artifacts
+supabase/.temp/
+supabase/seed.sql
+
+# Environment files (Claude should never read secrets)
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Vite cache
+.vite/
+vite.config.js.timestamp-*
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Dead code (Deck Stack only)
+src/pages/
+
+# Lock files (large, not useful for context)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
