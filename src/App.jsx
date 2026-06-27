@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Turnstile } from "@marsidev/react-turnstile";
 import HostPage        from "./pages/HostPage.jsx";
@@ -5,8 +6,16 @@ import JoinPage        from "./pages/JoinPage.jsx";
 import PersistentShell from "./components/PersistentShell.jsx";
 import ThemePicker     from "./components/ThemePicker.jsx";
 import { initSession } from "./lib/supabase.js";
+import { useTheme }    from "./theme/ThemeContext.jsx";
 
 export default function App() {
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    document.body.style.background = theme.base;
+    document.body.style.fontFamily = "'Noto Sans', sans-serif";
+  }, [theme.base]);
+
   return (
     <>
       <div style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none" }}>
