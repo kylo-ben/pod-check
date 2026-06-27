@@ -4,6 +4,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import HostPage        from "./pages/HostPage.jsx";
 import JoinPage        from "./pages/JoinPage.jsx";
 import EventPage       from "./pages/EventPage.jsx";
+import EventHostSetup  from "./pages/EventHostSetup.jsx";
 import PersistentShell from "./components/PersistentShell.jsx";
 import { initSession } from "./lib/supabase.js";
 import { useTheme }    from "./theme/ThemeContext.jsx";
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/join/:sessionId" element={<JoinPage />} />
 
         {/* Event sign-up: many pods filling by arrival */}
+        <Route path="/event/new" element={<EventHostSetup />} />
         <Route path="/event/:code" element={<EventPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

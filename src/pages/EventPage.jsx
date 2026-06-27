@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import { PageWrapper, Logo } from "../lib/ui.jsx";
+import { displayName } from "../lib/pods.js";
+import PodCard from "../components/PodCard.jsx";
 import { useTheme } from "../theme/ThemeContext.jsx";
 
 function useTokens() {
@@ -29,6 +31,14 @@ export default function EventPage() {
 
   const [event, setEvent] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const share = useCallback(() => {
+    navigator.clipboard?.writeText(`https://pod-check.vercel.app/event/${code}`).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [code]);
 
   useEffect(() => {
     async function load() {
@@ -66,13 +76,17 @@ export default function EventPage() {
     </PageWrapper>
   );
 
-  const waiting = event.players.filter((p) => p.status === "waiting").length;
+  const byId = new Map(event.players.map((p) => [p.id, p]));
+  const waiting = event.players.filter((p) => p.status === "waiting");
+  const pods = event.pods ?? [];
 
   return (
     <PageWrapper>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${t.border}` }}>
         <Logo size="sm" />
-        <div style={{ fontSize: 12, color: t.accent, letterSpacing: 3 }}>{code}</div>
+        <button onClick={share} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Noto Sans Mono', monospace", fontSize: 12, color: copied ? t.accent : t.accent, letterSpacing: 3 }}>
+          {copied ? "COPIED ✓" : code}
+        </button>
       </div>
 
       <div style={{ padding: "24px 20px", maxWidth: 520, margin: "0 auto" }}>
@@ -80,11 +94,30 @@ export default function EventPage() {
           EVENT LOBBY
         </div>
         <div style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, color: t.dim, letterSpacing: 1, marginBottom: 20 }}>
-          TARGET BRACKET {event.targetBracket} · {event.pods.length} POD{event.pods.length === 1 ? "" : "S"} · {waiting} WAITING{isHost ? " · HOST" : ""}
+          TARGET B{event.targetBracket} · {pods.length} POD{pods.length === 1 ? "" : "S"} · {waiting.length} WAITING{isHost ? " · HOST" : ""}
         </div>
-        <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: 16, color: t.dim, fontSize: 12, lineHeight: 1.6 }}>
-          Lobby coming together — pods, sign-up and swaps build on this shell.
+
+        {pods.map((pod, i) => (
+          <PodCard key={pod.id} index={i} members={pod.memberIds.map((id) => byId.get(id)).filter(Boolean)} />
+        ))}
+
+        <div style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 9, color: t.dim, letterSpacing: 1.5, margin: "8px 0 10px" }}>
+          WAITING FOR A POD ({waiting.length})
         </div>
+        {waiting.length === 0 ? (
+          <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: 16, color: t.dim, fontSize: 12, lineHeight: 1.6, textAlign: "center" }}>
+            No one's signed up yet. Share the code to fill the room.
+          </div>
+        ) : (
+          <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, overflow: "hidden" }}>
+            {waiting.map((p, i) => (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < waiting.length - 1 ? `1px solid ${t.border}` : "none" }}>
+                <span style={{ fontSize: 13, color: t.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName(p)}</span>
+                <span style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, color: t.dim, flexShrink: 0, marginLeft: 8 }}>{p.bracket != null ? `B${p.bracket}` : "—"}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </PageWrapper>
   );
