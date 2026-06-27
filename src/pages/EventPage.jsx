@@ -5,6 +5,7 @@ import { PageWrapper, Logo } from "../lib/ui.jsx";
 import PodCard, { NudgeTag } from "../components/PodCard.jsx";
 import Identity from "../components/Identity.jsx";
 import EventSignup from "../components/EventSignup.jsx";
+import SwapPanel from "../components/SwapPanel.jsx";
 import { needsNudge, assignPods } from "../lib/pods.js";
 import { useTheme } from "../theme/ThemeContext.jsx";
 
@@ -161,9 +162,15 @@ export default function EventPage() {
           )
         )}
 
-        {pods.map((pod, i) => (
-          <PodCard key={pod.id} index={i} target={event.targetBracket} members={pod.memberIds.map((id) => byId.get(id)).filter(Boolean)} />
-        ))}
+        {pods.map((pod, i) => {
+          const members = pod.memberIds.map((id) => byId.get(id)).filter(Boolean);
+          const mine = members.some((m) => m.id === myId);
+          return (
+            <PodCard key={pod.id} index={i} target={event.targetBracket} members={members}>
+              {mine && <SwapPanel code={code} pod={pod} members={members} myId={myId} />}
+            </PodCard>
+          );
+        })}
 
         <div style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 9, color: t.dim, letterSpacing: 1.5, margin: "8px 0 10px" }}>
           WAITING FOR A POD ({waiting.length})
