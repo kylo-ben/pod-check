@@ -177,7 +177,7 @@ export default function EventPage() {
         </div>
         {waiting.length === 0 ? (
           <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: 16, color: t.dim, fontSize: 12, lineHeight: 1.6, textAlign: "center" }}>
-            No one's signed up yet. Share the code to fill the room.
+            Nobody's pulled up a chair yet. Share the code to fill the room.
           </div>
         ) : (
           <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, overflow: "hidden" }}>
