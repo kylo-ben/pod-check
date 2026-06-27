@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Turnstile } from "@marsidev/react-turnstile";
+import Home           from "./pages/Home.jsx";
 import HostPage        from "./pages/HostPage.jsx";
 import JoinPage        from "./pages/JoinPage.jsx";
 import EventPage       from "./pages/EventPage.jsx";
@@ -23,8 +24,11 @@ export default function App() {
         <Turnstile siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY} onSuccess={initSession} />
       </div>
       <Routes>
-        {/* Landing shell — persistent MY DECK + POD tabs */}
-        <Route path="/" element={<PersistentShell />} />
+        {/* Event-first front door */}
+        <Route path="/" element={<Home />} />
+
+        {/* Classic single-pod balance tool — demoted, still works */}
+        <Route path="/classic" element={<PersistentShell />} />
 
         {/* Host watches the session */}
         <Route path="/host/:sessionId" element={<HostPage />} />
