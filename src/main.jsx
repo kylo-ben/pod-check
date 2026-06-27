@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/react";
 import { browserTracingIntegration } from "@sentry/react";
 import "./styles/tokens.css";
 import { initTheme } from "./styles/theme-switcher.js";
+import { ThemeProvider } from "./theme/ThemeContext.jsx";
 import App from "./App.jsx";
 
 initTheme();
@@ -22,7 +23,9 @@ inject();
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
