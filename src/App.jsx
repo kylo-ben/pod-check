@@ -4,7 +4,6 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import HostPage        from "./pages/HostPage.jsx";
 import JoinPage        from "./pages/JoinPage.jsx";
 import PersistentShell from "./components/PersistentShell.jsx";
-import ThemePicker     from "./components/ThemePicker.jsx";
 import { initSession } from "./lib/supabase.js";
 import { useTheme }    from "./theme/ThemeContext.jsx";
 
@@ -21,7 +20,6 @@ export default function App() {
       <div style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none" }}>
         <Turnstile siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY} onSuccess={initSession} />
       </div>
-      <ThemePicker />
       <Routes>
         {/* Landing shell — persistent MY DECK + POD tabs */}
         <Route path="/" element={<PersistentShell />} />
