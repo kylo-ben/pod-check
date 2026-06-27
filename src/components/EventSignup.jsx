@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase.js";
 import { useTheme } from "../theme/ThemeContext.jsx";
 import {
-  newEventPlayer, commanderPeers, takenTiebreaks, firstFreeTiebreak, needsNudge,
+  newEventPlayer, commanderPeers, takenTiebreaks, firstFreeTiebreak, needsNudge, assignPods,
 } from "../lib/pods.js";
 import TiebreakPicker from "./TiebreakPicker.jsx";
 
@@ -75,7 +75,11 @@ export default function EventSignup({ code, event, variant = "self", onDone, onC
           }
         }
       }
-      const updated = { ...ev, players: [...ev.players, player] };
+      // Append, then re-run pod assignment (deterministic — forms pods of 4
+      // within one bracket step, leaves the rest waiting).
+      const withPlayer = { ...ev, players: [...ev.players, player] };
+      const assigned = assignPods(withPlayer);
+      const updated = { ...withPlayer, players: assigned.players, pods: assigned.pods };
       const { error: writeErr } = await supabase.from("sessions").update({ data: updated }).eq("id", code);
       if (writeErr) throw new Error(writeErr.message || "Couldn't sign up. Try again.");
 

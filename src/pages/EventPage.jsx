@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import { PageWrapper, Logo } from "../lib/ui.jsx";
-import PodCard from "../components/PodCard.jsx";
+import PodCard, { NudgeTag } from "../components/PodCard.jsx";
 import Identity from "../components/Identity.jsx";
 import EventSignup from "../components/EventSignup.jsx";
+import { needsNudge } from "../lib/pods.js";
 import { useTheme } from "../theme/ThemeContext.jsx";
 
 function useTokens() {
@@ -119,7 +120,7 @@ export default function EventPage() {
         )}
 
         {pods.map((pod, i) => (
-          <PodCard key={pod.id} index={i} members={pod.memberIds.map((id) => byId.get(id)).filter(Boolean)} />
+          <PodCard key={pod.id} index={i} target={event.targetBracket} members={pod.memberIds.map((id) => byId.get(id)).filter(Boolean)} />
         ))}
 
         <div style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 9, color: t.dim, letterSpacing: 1.5, margin: "8px 0 10px" }}>
@@ -137,7 +138,10 @@ export default function EventPage() {
                   <Identity player={p} color={p.id === myId ? t.accent : t.ink} />
                   {p.id === myId && <span style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 9, color: t.accent, letterSpacing: 1 }}>YOU</span>}
                 </span>
-                <span style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, color: t.dim, flexShrink: 0, marginLeft: 8 }}>{p.bracket != null ? `B${p.bracket}` : "—"}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, marginLeft: 8 }}>
+                  {needsNudge(p.bracket, event.targetBracket) && <NudgeTag t={t} />}
+                  <span style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, color: t.dim }}>{p.bracket != null ? `B${p.bracket}` : "—"}</span>
+                </span>
               </div>
             ))}
           </div>
