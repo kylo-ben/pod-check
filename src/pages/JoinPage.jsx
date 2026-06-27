@@ -1,9 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
-import { COLORS, BRACKET_META, PageWrapper, Logo, SessionCodeCard, useAuth, usePodPresence } from "../lib/ui.jsx";
+import { BRACKET_META, PageWrapper, Logo, SessionCodeCard, useAuth, usePodPresence } from "../lib/ui.jsx";
 import SavedDeckPicker from "../components/SavedDeckPicker.jsx";
 import { QRCodeSVG } from "qrcode.react";
+import { useTheme } from "../theme/ThemeContext.jsx";
+
+function useTokens() {
+  const { theme, mode } = useTheme();
+  const light = mode === "light";
+  return {
+    base:      theme.base,
+    panel:     light ? theme.paper : theme.surface,
+    ink:       light ? theme.ink   : theme.white,
+    dim:       light ? theme.muted : theme.dim,
+    border:    light ? theme.border : theme.muted,
+    accent:    light ? theme.gold  : theme.amber,
+    attention: light ? theme.stamp : theme.amber,
+  };
+}
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 function decodeEntities(str) {
@@ -17,12 +32,12 @@ function decodeEntities(str) {
 // ─── Facts Ticker ─────────────────────────────────────────────────────────────
 const MTG_FACTS = [
   "Magic was briefly called Mana Clash before becoming Magic: The Gathering.",
-  "\u201cThe Gathering\u201d was added to make the name legally protectable.",
+  "“The Gathering” was added to make the name legally protectable.",
   "Garfield planned to rename Magic with each set (e.g., Magic: Ice Age).",
   "Deckmaster was a shared brand for multiple Wizards TCGs.",
   "The card back has never changed to maintain uniformity.",
   "The original logo was blue and later changed to yellow for visibility.",
-  "The card back still uses an outdated \u2122 instead of \u00ae.",
+  "The card back still uses an outdated ™ instead of ®.",
   "The card back is designed to resemble a magical tome.",
   "Arabian Nights almost had a different card back.",
   "Alpha had misprints that affected gameplay.",
@@ -33,7 +48,7 @@ const MTG_FACTS = [
   "Early promo cards were distributed through Magic novels.",
   "Arabian Nights, Antiquities, and Legends had redemption programs.",
   "Legends split uncommons into two sheets, limiting what could appear together.",
-  "Alpha cards used \u201cTap to\u201d before the tap symbol existed.",
+  "Alpha cards used “Tap to” before the tap symbol existed.",
   "The tap symbol changed multiple times due to localization.",
   "The white mana symbol was redesigned for clarity.",
   "Magic entered the Game Hall of Fame its first eligible year.",
@@ -57,12 +72,13 @@ const MTG_FACTS = [
 
 // ─── StepBar ──────────────────────────────────────────────────────────────────
 function StepBar({ current, total }) {
+  const t = useTokens();
   return (
     <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} style={{
-          flex: 1, height: 3, borderRadius: 2,
-          background: i < current ? "#b8a8d8" : "rgba(255,255,255,0.1)",
+          flex: 1, height: 3, borderRadius: 0,
+          background: i < current ? t.accent : t.border,
           transition: "background 0.3s",
         }} />
       ))}
@@ -72,6 +88,7 @@ function StepBar({ current, total }) {
 
 // ─── BigVerdict ───────────────────────────────────────────────────────────────
 function BigVerdict({ players, mySeat, onResubmit }) {
+  const t = useTokens();
   const allReady = players.filter(p => p.status === "ready");
   const online = allReady.filter(p => p.deckData?.power != null);
   if (online.length < 2) return null;
@@ -82,19 +99,15 @@ function BigVerdict({ players, mySeat, onResubmit }) {
   const brackets = allReady.map(p => p.deckData?.bracket).filter(Boolean);
   const bracketSpread = brackets.length > 1 ? Math.max(...brackets) - Math.min(...brackets) : 0;
 
-  let verdict, sub, color, emoji, bg;
+  let verdict, sub, emoji;
   if (spread <= 0.8 && bracketSpread <= 1) {
-    verdict = "FAIR GAME"; sub = "Power levels are well matched. Good game ahead.";
-    color = "#5aaa88"; emoji = "⚖️"; bg = "rgba(90,170,136,0.08)";
+    verdict = "FAIR GAME"; sub = "Power levels are well matched. Good game ahead."; emoji = "⚖️";
   } else if (spread <= 1.5 || bracketSpread <= 1) {
-    verdict = "SLIGHT GAP"; sub = "Minor power difference — totally playable, just worth noting.";
-    color = "#c4915a"; emoji = "🟡"; bg = "rgba(196,145,90,0.08)";
+    verdict = "SLIGHT GAP"; sub = "Minor power difference — totally playable, just worth noting."; emoji = "🟡";
   } else if (spread <= 2.5) {
-    verdict = "NOTABLE MISMATCH"; sub = "Real bracket difference. Have a quick conversation before you play.";
-    color = "#c4915a"; emoji = "⚠️"; bg = "rgba(196,145,90,0.08)";
+    verdict = "NOTABLE MISMATCH"; sub = "Real bracket difference. Have a quick conversation before you play."; emoji = "⚠️";
   } else {
-    verdict = "BAD IDEA"; sub = "Significant power gap. Someone should grab a different deck.";
-    color = "#c45c6a"; emoji = "🔴"; bg = "rgba(196,92,106,0.08)";
+    verdict = "BAD IDEA"; sub = "Significant power gap. Someone should grab a different deck."; emoji = "🔴";
   }
 
   const ranked = [
@@ -104,46 +117,46 @@ function BigVerdict({ players, mySeat, onResubmit }) {
 
   return (
     <div style={{ animation: "fadeUp 0.5s ease both" }}>
-      <div style={{ background: bg, border: `2px solid ${color}40`, borderRadius: 20, padding: "28px 20px", textAlign: "center", marginBottom: 16 }}>
+      <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: "28px 20px", textAlign: "center", marginBottom: 16 }}>
         <div style={{ fontSize: 44, marginBottom: 10 }}>{emoji}</div>
-        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 4, color, lineHeight: 1, marginBottom: 10 }}>{verdict}</div>
-        <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6, maxWidth: 280, margin: "0 auto 16px" }}>{sub}</div>
+        <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 48, letterSpacing: 1, color: t.ink, lineHeight: 1, marginBottom: 10 }}>{verdict}</div>
+        <div style={{ fontSize: 13, color: t.dim, lineHeight: 1.6, maxWidth: 280, margin: "0 auto 16px" }}>{sub}</div>
         <div style={{ display: "flex", justifyContent: "center", gap: 24 }}>
-          <StatBox label="AVG POWER" value={avg} color={color} />
-          <StatBox label="SPREAD" value={spread.toFixed(1)} color={color} />
-          {bracketSpread > 0 && <StatBox label="BRACKET GAP" value={bracketSpread} color={color} />}
+          <StatBox label="AVG POWER" value={avg} />
+          <StatBox label="SPREAD" value={spread.toFixed(1)} />
+          {bracketSpread > 0 && <StatBox label="BRACKET GAP" value={bracketSpread} />}
         </div>
       </div>
-      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 14, marginBottom: 16 }}>
-        <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, marginBottom: 10 }}>POWER RANKING</div>
+      <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: 14, marginBottom: 16 }}>
+        <div style={{ fontSize: 10, color: t.dim, letterSpacing: 2, marginBottom: 10 }}>POWER RANKING</div>
         {ranked.map((p, rank) => {
           const oi = players.indexOf(p);
-          const c = COLORS[oi];
           const isOffline = p.deckData?.offline || p.offline;
           const hasPower = p.deckData?.power != null;
           const pct = hasPower ? ((p.deckData.power - 1) / 9) * 100 : 0;
           const bMeta = p.deckData?.bracket ? BRACKET_META[p.deckData.bracket] : null;
+          const rowColor = isOffline ? t.dim : t.ink;
           return (
             <div key={oi} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <div style={{ fontSize: 10, color: "#475569", width: 14, textAlign: "right" }}>{hasPower ? rank + 1 : "·"}</div>
-              <div style={{ fontSize: 12, color: isOffline ? "#475569" : c, width: 90, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 10, color: t.dim, width: 14, textAlign: "right" }}>{hasPower ? rank + 1 : "·"}</div>
+              <div style={{ fontSize: 12, color: rowColor, width: 90, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {p.deckData?.commander || p.name || `P${oi + 1}`}
                 {isOffline
-                  ? <span style={{ fontSize: 9, color: "#334155", marginLeft: 4 }}>· self-reported</span>
-                  : p.deckData?.selfReported && <span style={{ fontSize: 9, color: "#475569", marginLeft: 4 }}>· self-reported</span>
+                  ? <span style={{ fontSize: 9, color: t.dim, marginLeft: 4 }}>· self-reported</span>
+                  : p.deckData?.selfReported && <span style={{ fontSize: 9, color: t.dim, marginLeft: 4 }}>· self-reported</span>
                 }
               </div>
-              <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: 3, height: 5, overflow: "hidden" }}>
-                {hasPower && <div style={{ width: `${pct}%`, height: "100%", background: c, borderRadius: 3 }} />}
+              <div style={{ flex: 1, background: t.border, borderRadius: 0, height: 5, overflow: "hidden" }}>
+                {hasPower && <div style={{ width: `${pct}%`, height: "100%", background: t.accent, borderRadius: 0 }} />}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: hasPower ? c : "#334155", width: 30, textAlign: "right" }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: hasPower ? t.ink : t.dim, width: 30, textAlign: "right" }}>
                 {hasPower ? p.deckData.power.toFixed(1) : "—"}
               </div>
-              {bMeta && <div style={{ fontSize: 10, color: bMeta.color, width: 28, textAlign: "right" }}>B{p.deckData.bracket}</div>}
+              {bMeta && <div style={{ fontSize: 10, color: t.dim, width: 28, textAlign: "right" }}>B{p.deckData.bracket}</div>}
               {oi === mySeat && onResubmit && (
                 <button
                   onClick={onResubmit}
-                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 4, padding: "2px 8px", fontSize: 9, color: "#475569", cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, flexShrink: 0 }}
+                  style={{ background: "none", border: `1px solid ${t.border}`, borderRadius: 0, padding: "2px 8px", fontSize: 9, color: t.dim, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, flexShrink: 0 }}
                 >
                   RE-SUBMIT
                 </button>
@@ -156,17 +169,19 @@ function BigVerdict({ players, mySeat, onResubmit }) {
   );
 }
 
-function StatBox({ label, value, color }) {
+function StatBox({ label, value }) {
+  const t = useTokens();
   return (
     <div>
-      <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 800, color }}>{value}</div>
+      <div style={{ fontSize: 10, color: t.dim, letterSpacing: 2 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: t.ink }}>{value}</div>
     </div>
   );
 }
 
 // ─── MTGFact ─────────────────────────────────────────────────────────────────
 function MtgFact() {
+  const t = useTokens();
   const [index, setIndex] = useState(() => Math.floor(Math.random() * MTG_FACTS.length));
   const [visible, setVisible] = useState(true);
 
@@ -184,10 +199,10 @@ function MtgFact() {
   return (
     <div style={{
       maxWidth: 320, margin: "0 auto 28px", padding: "14px 18px",
-      background: "rgba(76,129,156,0.06)", border: "1px solid rgba(76,129,156,0.15)",
-      borderRadius: 12, opacity: visible ? 1 : 0, transition: "opacity 0.5s ease",
+      background: t.panel, border: `1px solid ${t.border}`,
+      borderRadius: 0, opacity: visible ? 1 : 0, transition: "opacity 0.5s ease",
     }}>
-      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>
+      <div style={{ fontSize: 12, color: t.dim, lineHeight: 1.7 }}>
         {MTG_FACTS[index]}
       </div>
     </div>
@@ -195,40 +210,35 @@ function MtgFact() {
 }
 
 // ─── LobbyStatus ──────────────────────────────────────────────────────────────
-const STATUS_META = {
-  empty:     { text: "Empty",     color: "#334155" },
-  pending:   { text: "Joined",    color: "#7ba7bb" },
-  analyzing: { text: "Analyzing", color: "#c4915a" },
-  ready:     { text: "Ready ✓",   color: "#5aaa88" },
-};
+const STATUS_TEXT = { empty: "Empty", pending: "Joined", analyzing: "Analyzing", ready: "Ready ✓" };
 
 function LobbyStatus({ session, mySeat }) {
+  const t = useTokens();
+  const statusColor = (s) => (s === "empty" ? t.dim : s === "analyzing" ? t.accent : t.ink);
   return (
-    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 16, marginTop: 20 }}>
-      <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, marginBottom: 10 }}>POD STATUS</div>
-      {session.players.map((p, i) => {
-        const s = STATUS_META[p.status];
-        return (
-          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 0", borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: COLORS[i], opacity: p.status === "empty" ? 0.2 : 1 }} />
-              <span style={{ fontSize: 12, color: i === mySeat ? COLORS[i] : p.status === "empty" ? "#334155" : "#94a3b8" }}>
-                {p.name || `Seat ${i + 1}`}{i === mySeat && <span style={{ opacity: 0.5 }}> (you)</span>}
-              </span>
-            </div>
-            <div style={{ fontSize: 10, color: s?.color ?? "#334155", letterSpacing: 1, display: "flex", alignItems: "center", gap: 5 }}>
-              {p.status === "analyzing" && <div style={{ width: 7, height: 7, border: "1.5px solid currentColor", borderTop: "1.5px solid transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />}
-              {s?.text ?? "Empty"}
-            </div>
+    <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: 16, marginTop: 20 }}>
+      <div style={{ fontSize: 10, color: t.dim, letterSpacing: 2, marginBottom: 10 }}>POD STATUS</div>
+      {session.players.map((p, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 0", borderBottom: i < 3 ? `1px solid ${t.border}` : "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 7, height: 7, borderRadius: 0, background: i === mySeat ? t.accent : t.dim, opacity: p.status === "empty" ? 0.3 : 1 }} />
+            <span style={{ fontSize: 12, color: i === mySeat ? t.accent : p.status === "empty" ? t.dim : t.ink }}>
+              {p.name || `Seat ${i + 1}`}{i === mySeat && <span style={{ opacity: 0.5 }}> (you)</span>}
+            </span>
           </div>
-        );
-      })}
+          <div style={{ fontSize: 10, color: statusColor(p.status), letterSpacing: 1, display: "flex", alignItems: "center", gap: 5 }}>
+            {p.status === "analyzing" && <div style={{ width: 7, height: 7, border: "1.5px solid currentColor", borderTop: "1.5px solid transparent", borderRadius: 0, animation: "spin 0.8s linear infinite" }} />}
+            {STATUS_TEXT[p.status] ?? "Empty"}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 // ─── CommanderSearch ──────────────────────────────────────────────────────────
-function CommanderSearch({ onSelect, color }) {
+function CommanderSearch({ onSelect }) {
+  const t = useTokens();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [cmdError, setCmdError] = useState(null);
@@ -265,8 +275,8 @@ function CommanderSearch({ onSelect, color }) {
 
   return (
     <div style={{ animation: "fadeUp 0.4s ease both" }}>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "#e0f2ff", marginBottom: 12, lineHeight: 1.1 }}>WHO'S YOUR COMMANDER?</div>
-      <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.8, marginBottom: 20 }}>Search and tap your commander. That's your display name.</div>
+      <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 32, letterSpacing: 1, color: t.ink, marginBottom: 12, lineHeight: 1.1 }}>WHO'S YOUR COMMANDER?</div>
+      <div style={{ fontSize: 13, color: t.dim, lineHeight: 1.8, marginBottom: 20 }}>Search and tap your commander. That's your display name.</div>
       <input
         value={query}
         onChange={e => {
@@ -277,80 +287,80 @@ function CommanderSearch({ onSelect, color }) {
         }}
         placeholder="Search commander name..."
         autoFocus
-        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: results.length ? "10px 10px 0 0" : 10, padding: "14px", color: "#e0f2ff", fontSize: 14, fontFamily: "inherit" }}
+        style={{ width: "100%", background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: "14px", color: t.ink, fontSize: 14, fontFamily: "inherit" }}
       />
       {results.length > 0 && (
-        <div style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.08)", borderTop: "none", borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
+        <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderTop: "none", borderRadius: 0, overflow: "hidden" }}>
           {results.map(name => (
             <div
               key={name}
               onClick={() => handleSelect(name)}
-              style={{ padding: "12px 14px", fontSize: 13, color: "#e0f2ff", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+              style={{ padding: "12px 14px", fontSize: 13, color: t.ink, cursor: "pointer", borderBottom: `1px solid ${t.border}` }}
             >
               {decodeEntities(name)}
             </div>
           ))}
         </div>
       )}
-      {validating && <div style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>Checking legality...</div>}
-      {cmdError && <div style={{ fontSize: 12, color: "#c45c6a", marginTop: 8 }}>{cmdError}</div>}
+      {validating && <div style={{ fontSize: 12, color: t.dim, marginTop: 8 }}>Checking legality...</div>}
+      {cmdError && <div style={{ fontSize: 12, color: t.attention, marginTop: 8 }}>{cmdError}</div>}
     </div>
   );
 }
 
 // ─── EscapeHatch ──────────────────────────────────────────────────────────────
 function EscapeHatch({ onComplete }) {
+  const t = useTokens();
   const [show, setShow] = useState(false);
   const [bracket, setBracket] = useState(null);
 
   if (!show) return (
     <button
       onClick={() => setShow(true)}
-      style={{ background: "none", border: "none", color: "rgba(255,255,255,0.25)", fontSize: 11, fontFamily: "inherit", cursor: "pointer", marginTop: 16, textDecoration: "underline", letterSpacing: 1 }}
+      style={{ background: "none", border: "none", color: t.dim, fontSize: 11, fontFamily: "inherit", cursor: "pointer", marginTop: 16, textDecoration: "underline", letterSpacing: 1 }}
     >
       skip scrycheck — i know my bracket
     </button>
   );
 
   if (bracket !== null) return (
-    <div style={{ marginTop: 16, padding: 16, background: "rgba(255,255,255,0.04)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
-      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginBottom: 12 }}>WHO'S YOUR COMMANDER?</div>
+    <div style={{ marginTop: 16, padding: 16, background: t.panel, borderRadius: 0, border: `1px solid ${t.border}` }}>
+      <div style={{ fontSize: 10, color: t.dim, letterSpacing: 2, marginBottom: 12 }}>WHO'S YOUR COMMANDER?</div>
       <CommanderSearch
         onSelect={(name) => onComplete({ commander: name, power: null, bracket: bracket.b, tier: bracket.label, selfReported: true, vectors: {} })}
-        color="#b8a8d8"
       />
-      <button onClick={() => setBracket(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", fontSize: 10, cursor: "pointer", fontFamily: "inherit", marginTop: 12 }}>← back</button>
+      <button onClick={() => setBracket(null)} style={{ background: "none", border: "none", color: t.dim, fontSize: 10, cursor: "pointer", fontFamily: "inherit", marginTop: 12 }}>← back</button>
     </div>
   );
 
   return (
-    <div style={{ marginTop: 16, padding: 16, background: "rgba(255,255,255,0.04)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
-      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginBottom: 12 }}>SELF-REPORTED BRACKET</div>
-      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", marginBottom: 12, lineHeight: 1.6 }}>cool, we trust you. mostly. 🫡</div>
+    <div style={{ marginTop: 16, padding: 16, background: t.panel, borderRadius: 0, border: `1px solid ${t.border}` }}>
+      <div style={{ fontSize: 10, color: t.dim, letterSpacing: 2, marginBottom: 12 }}>SELF-REPORTED BRACKET</div>
+      <div style={{ fontSize: 10, color: t.dim, marginBottom: 12, lineHeight: 1.6 }}>cool, we trust you. mostly. 🫡</div>
       {[
         { b: 1, label: "Precon" }, { b: 2, label: "Upgraded" }, { b: 3, label: "Optimized" },
         { b: 4, label: "High Power" }, { b: 5, label: "cEDH" },
       ].map(({ b, label }) => (
         <button key={b}
           onClick={() => setBracket({ b, label })}
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", color: "#e0f2ff" }}>
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: t.base, border: `1px solid ${t.border}`, borderRadius: 0, padding: "10px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", color: t.ink }}>
           <span style={{ fontSize: 12 }}>B{b} · {label}</span>
-          <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>→</span>
+          <span style={{ fontSize: 10, color: t.dim }}>→</span>
         </button>
       ))}
-      <button onClick={() => setShow(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", fontSize: 10, cursor: "pointer", fontFamily: "inherit", marginTop: 4 }}>← back</button>
+      <button onClick={() => setShow(false)} style={{ background: "none", border: "none", color: t.dim, fontSize: 10, cursor: "pointer", fontFamily: "inherit", marginTop: 4 }}>← back</button>
     </div>
   );
 }
 
 // ─── ThreeBarOnboarding ───────────────────────────────────────────────────────
 function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
+  const t = useTokens();
   const [bars, setBars] = useState([false, false, false]);
   const [deckSiteOpened, setDeckSiteOpened] = useState(false);
   const [resultInput, setResultInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const myColor = COLORS[mySeat];
 
   const handleOpenDeckSite = useCallback((url) => {
     window.open(url, "_blank");
@@ -391,8 +401,8 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
 
   return (
     <div style={{ animation: "fadeUp 0.4s ease both" }}>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: "#e0f2ff", marginBottom: 6, lineHeight: 1.1 }}>ANALYZE YOUR DECK</div>
-      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginBottom: 24, lineHeight: 1.7 }}>One paste. Thirty seconds.</div>
+      <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 28, letterSpacing: 1, color: t.ink, marginBottom: 6, lineHeight: 1.1 }}>ANALYZE YOUR DECK</div>
+      <div style={{ fontSize: 12, color: t.dim, marginBottom: 24, lineHeight: 1.7 }}>One paste. Thirty seconds.</div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {BAR_DEFS.map(({ label, sub }, i) => {
@@ -403,44 +413,44 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
             <div key={i}>
               <div style={{
                 display: "flex", alignItems: "center", gap: 14, padding: "16px 18px",
-                background: done ? "rgba(90,170,136,0.08)" : active ? `${myColor}10` : "rgba(255,255,255,0.02)",
-                border: `1.5px solid ${done ? "#5aaa88" : active ? myColor : "rgba(255,255,255,0.06)"}`,
-                borderRadius: 14, transition: "all 0.3s",
+                background: done ? `${t.accent}10` : active ? `${t.accent}10` : t.panel,
+                border: `1.5px solid ${done ? t.accent : active ? t.accent : t.border}`,
+                borderRadius: 0, transition: "all 0.3s",
               }}>
                 <div style={{
-                  width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-                  background: done ? "#5aaa88" : active ? myColor : "rgba(255,255,255,0.08)",
+                  width: 20, height: 20, borderRadius: 0, flexShrink: 0,
+                  background: done ? t.accent : active ? t.accent : t.border,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, color: "#1a2744", fontWeight: 700,
+                  fontSize: 11, color: t.base, fontWeight: 700,
                 }}>
                   {done ? "✓" : isAnalyzing ? (
-                    <div style={{ width: 10, height: 10, border: "2px solid rgba(26,39,68,0.3)", borderTop: `2px solid #1a2744`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                    <div style={{ width: 10, height: 10, border: `2px solid ${t.base}40`, borderTop: `2px solid ${t.base}`, borderRadius: 0, animation: "spin 0.8s linear infinite" }} />
                   ) : i + 1}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: done ? "#5aaa88" : active ? "#e0f2ff" : "rgba(255,255,255,0.2)", letterSpacing: 1 }}>{label}</div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 1 }}>{sub}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: done ? t.ink : active ? t.ink : t.dim, letterSpacing: 1 }}>{label}</div>
+                  <div style={{ fontSize: 10, color: t.dim, marginTop: 1 }}>{sub}</div>
                 </div>
-                <div style={{ fontSize: 14, color: done ? "#5aaa88" : active ? myColor : "rgba(255,255,255,0.1)", flexShrink: 0 }}>
+                <div style={{ fontSize: 14, color: done ? t.accent : active ? t.accent : t.dim, flexShrink: 0 }}>
                   {done ? "✓" : "·"}
                 </div>
               </div>
 
               {i === 0 && active && !done && (
-                <div style={{ marginTop: 8, padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: `1px solid ${myColor}30`, borderRadius: 12, animation: "fadeUp 0.2s ease both" }}>
+                <div style={{ marginTop: 8, padding: "14px 16px", background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, animation: "fadeUp 0.2s ease both" }}>
                   <div style={{ display: "flex", gap: 8, marginBottom: deckSiteOpened ? 12 : 0 }}>
                     <button onClick={() => handleOpenDeckSite("https://www.moxfield.com")}
-                      style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px", color: "#e0f2ff", fontSize: 12, fontFamily: "inherit", cursor: "pointer" }}>
+                      style={{ flex: 1, background: t.base, border: `1px solid ${t.border}`, borderRadius: 0, padding: "10px", color: t.ink, fontSize: 12, fontFamily: "inherit", cursor: "pointer" }}>
                       OPEN MOXFIELD ↗
                     </button>
                     <button onClick={() => handleOpenDeckSite("https://www.archidekt.com")}
-                      style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px", color: "#e0f2ff", fontSize: 12, fontFamily: "inherit", cursor: "pointer" }}>
+                      style={{ flex: 1, background: t.base, border: `1px solid ${t.border}`, borderRadius: 0, padding: "10px", color: t.ink, fontSize: 12, fontFamily: "inherit", cursor: "pointer" }}>
                       OPEN ARCHIDEKT ↗
                     </button>
                   </div>
                   {deckSiteOpened && (
                     <button onClick={handleContinue}
-                      style={{ width: "100%", background: myColor, border: "none", borderRadius: 8, padding: "12px", color: "#1a2744", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1 }}>
+                      style={{ width: "100%", background: t.accent, border: "none", borderRadius: 0, padding: "12px", color: t.base, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1 }}>
                       CONTINUE →
                     </button>
                   )}
@@ -448,9 +458,9 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
               )}
 
               {i === 1 && active && !done && (
-                <div style={{ marginTop: 8, padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: `1px solid ${myColor}30`, borderRadius: 12, animation: "fadeUp 0.2s ease both" }}>
+                <div style={{ marginTop: 8, padding: "14px 16px", background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, animation: "fadeUp 0.2s ease both" }}>
                   {error && (
-                    <div style={{ marginBottom: 10, padding: "8px 12px", background: "rgba(196,92,106,0.1)", border: "1px solid rgba(196,92,106,0.25)", borderRadius: 8, fontSize: 12, color: "#c45c6a", lineHeight: 1.6 }}>
+                    <div style={{ marginBottom: 10, padding: "8px 12px", background: `${t.attention}15`, border: `1px solid ${t.attention}40`, borderRadius: 0, fontSize: 12, color: t.attention, lineHeight: 1.6 }}>
                       {error}
                     </div>
                   )}
@@ -461,12 +471,12 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
                       onKeyDown={e => e.key === "Enter" && resultInput.trim() && handleResultUrl(resultInput)}
                       placeholder="https://scrycheck.com/deck/..."
                       autoFocus
-                      style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: `1px solid ${error ? "#c45c6a" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, padding: "10px 12px", color: "#e0f2ff", fontSize: 16, fontFamily: "inherit" }}
+                      style={{ flex: 1, background: t.base, border: `1px solid ${error ? t.attention : t.border}`, borderRadius: 0, padding: "10px 12px", color: t.ink, fontSize: 16, fontFamily: "inherit" }}
                     />
                     <button
                       onClick={() => resultInput.trim() && handleResultUrl(resultInput)}
                       disabled={loading || !resultInput.trim()}
-                      style={{ background: loading ? "rgba(76,129,156,0.3)" : resultInput.trim() ? "#4c819c" : "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, padding: "0 16px", color: "#e0f2ff", fontSize: 13, fontWeight: 700, cursor: loading ? "wait" : "pointer", fontFamily: "inherit" }}>
+                      style={{ background: loading ? `${t.accent}40` : resultInput.trim() ? t.accent : t.border, border: "none", borderRadius: 0, padding: "0 16px", color: resultInput.trim() ? t.base : t.dim, fontSize: 13, fontWeight: 700, cursor: loading ? "wait" : "pointer", fontFamily: "inherit" }}>
                       {loading ? "..." : "GO"}
                     </button>
                   </div>
@@ -506,6 +516,7 @@ async function saveDeckToProfile(deckData, scrycheckUrl, user) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function JoinPage() {
+  const t = useTokens();
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -624,7 +635,7 @@ export default function JoinPage() {
   if (loadError) return (
     <PageWrapper>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 16, padding: 24 }}>
-        <Logo /><div style={{ color: "#c45c6a", fontSize: 13, textAlign: "center" }}>{loadError}</div>
+        <Logo /><div style={{ color: t.attention, fontSize: 13, textAlign: "center" }}>{loadError}</div>
       </div>
     </PageWrapper>
   );
@@ -632,7 +643,7 @@ export default function JoinPage() {
   if (!session) return (
     <PageWrapper>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 12 }}>
-        <div style={{ color: "#475569", fontSize: 13, letterSpacing: 2 }}>LOADING...</div>
+        <div style={{ color: t.dim, fontSize: 13, letterSpacing: 2 }}>LOADING...</div>
       </div>
     </PageWrapper>
   );
@@ -643,21 +654,21 @@ export default function JoinPage() {
         @keyframes spin { to{transform:rotate(360deg)} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        input:focus { outline:none; border-color:#4c819c !important; }
+        input:focus { outline:none; border-color:${t.accent} !important; }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${t.border}` }}>
         <Logo size="sm" />
-        <div style={{ fontSize: 12, color: "#b8a8d8", letterSpacing: 3 }}>{sessionId}</div>
+        <div style={{ fontSize: 12, color: t.accent, letterSpacing: 3 }}>{sessionId}</div>
       </div>
 
       <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
         {step === 1 && (
           <div style={{ animation: "fadeUp 0.4s ease both" }}>
             {session.players.filter(p => p.status !== "empty").length >= 4 ? (
-              <div style={{ color: "#c45c6a", fontSize: 13, textAlign: "center", marginTop: 40 }}>This session is full.</div>
+              <div style={{ color: t.attention, fontSize: 13, textAlign: "center", marginTop: 40 }}>This session is full.</div>
             ) : (
-              <div style={{ color: "#475569", fontSize: 13, textAlign: "center", marginTop: 40 }}>Joining session...</div>
+              <div style={{ color: t.dim, fontSize: 13, textAlign: "center", marginTop: 40 }}>Joining session...</div>
             )}
           </div>
         )}
@@ -679,19 +690,19 @@ export default function JoinPage() {
 
         {step === 4 && (
           <div style={{ animation: "fadeUp 0.4s ease both", textAlign: "center", padding: "32px 0" }}>
-            <div style={{ fontSize: 11, color: "#5aaa88", letterSpacing: 2, marginBottom: 20 }}>✓ DECK SUBMITTED</div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 3, color: "#e0f2ff", marginBottom: 8 }}>WAITING FOR THE POD</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 28 }}>Results appear automatically when everyone is ready.</div>
-            <div style={{ display: "inline-block", background: "#ffffff", borderRadius: 16, padding: 16, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, color: t.accent, letterSpacing: 2, marginBottom: 20 }}>✓ DECK SUBMITTED</div>
+            <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 32, letterSpacing: 1, color: t.ink, marginBottom: 8 }}>WAITING FOR THE POD</div>
+            <div style={{ fontSize: 13, color: t.dim, marginBottom: 28 }}>Results appear automatically when everyone is ready.</div>
+            <div style={{ display: "inline-block", background: "#ffffff", borderRadius: 0, padding: 16, marginBottom: 12 }}>
               <QRCodeSVG value={`https://pod-check.vercel.app/join/${sessionId}`} size={180} bgColor="#ffffff" fgColor="#000000" level="M" />
             </div>
-            <div style={{ fontSize: 10, color: "#475569", letterSpacing: 2, marginBottom: 28 }}>
+            <div style={{ fontSize: 10, color: t.dim, letterSpacing: 2, marginBottom: 28 }}>
               SCAN TO JOIN ·{" "}
-              <span style={{ color: "#b1d7e1", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 4 }}>
+              <span style={{ color: t.accent, fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 22, letterSpacing: 2 }}>
                 {sessionId}
               </span>
             </div>
-            <div style={{ width: 44, height: 44, border: "3px solid rgba(76,129,156,0.2)", borderTop: "3px solid #4c819c", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 28px" }} />
+            <div style={{ width: 44, height: 44, border: `3px solid ${t.border}`, borderTop: `3px solid ${t.accent}`, borderRadius: 0, animation: "spin 1s linear infinite", margin: "0 auto 28px" }} />
             <MtgFact />
             <LobbyStatus session={session} mySeat={mySeat} />
           </div>
@@ -699,9 +710,9 @@ export default function JoinPage() {
 
         {step === 5 && (
           <div style={{ animation: "fadeUp 0.5s ease both" }}>
-            <BigVerdict players={session.players} mode={session.mode} mySeat={mySeat} onResubmit={handleResubmit} />
+            <BigVerdict players={session.players} mySeat={mySeat} onResubmit={handleResubmit} />
             <div style={{ textAlign: "center", marginTop: 24 }}>
-              <button onClick={() => navigate("/")} style={{ ...btnStyle, background: "rgba(255,255,255,0.08)", color: "#e0f2ff", width: "100%" }}>
+              <button onClick={() => navigate("/")} style={{ border: "none", borderRadius: 0, padding: 14, fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", letterSpacing: 1, display: "block", background: t.panel, color: t.ink, width: "100%" }}>
                 DONE — BACK TO HOME
               </button>
             </div>
@@ -711,14 +722,3 @@ export default function JoinPage() {
     </PageWrapper>
   );
 }
-
-const inputStyle = {
-  width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)",
-  borderRadius: 10, padding: "12px 14px", color: "#e0f2ff", fontSize: 13,
-  fontFamily: "inherit", transition: "border-color 0.2s",
-};
-const btnStyle = {
-  border: "none", borderRadius: 10, padding: 14, color: "#1a2744", fontSize: 13,
-  fontWeight: 700, fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
-  transition: "opacity 0.2s", display: "block",
-};
