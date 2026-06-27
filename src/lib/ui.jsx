@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
 import { useTheme } from "../theme/ThemeContext.jsx";
 
-export const COLORS = ["#d4a0c0", "#c4915a", "#5aaa88", "#7ba7bb"];
-
+// Bracket labels. Colors were removed with the multi-theme teardown — the
+// single HELIX look reads brackets through neutral tokens at each call site.
 export const BRACKET_META = {
-  1: { label: "Precon",     color: "var(--cs-success)" },
-  2: { label: "Upgraded",   color: "var(--cs-pending)" },
-  3: { label: "Optimized",  color: "var(--cs-warn)" },
-  4: { label: "High Power", color: "var(--cs-danger)" },
-  5: { label: "cEDH",       color: "var(--cs-secondary-dim)" },
+  1: { label: "Precon" },
+  2: { label: "Upgraded" },
+  3: { label: "Optimized" },
+  4: { label: "High Power" },
+  5: { label: "cEDH" },
 };
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
