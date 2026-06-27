@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Turnstile } from "@marsidev/react-turnstile";
 import HostPage        from "./pages/HostPage.jsx";
 import JoinPage        from "./pages/JoinPage.jsx";
+import EventPage       from "./pages/EventPage.jsx";
 import PersistentShell from "./components/PersistentShell.jsx";
 import { initSession } from "./lib/supabase.js";
 import { useTheme }    from "./theme/ThemeContext.jsx";
@@ -29,6 +30,9 @@ export default function App() {
 
         {/* Players join via QR or code */}
         <Route path="/join/:sessionId" element={<JoinPage />} />
+
+        {/* Event sign-up: many pods filling by arrival */}
+        <Route path="/event/:code" element={<EventPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
