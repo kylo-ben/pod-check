@@ -5,7 +5,7 @@ import { PageWrapper, Logo } from "../lib/ui.jsx";
 import PodCard, { NudgeTag } from "../components/PodCard.jsx";
 import Identity from "../components/Identity.jsx";
 import EventSignup from "../components/EventSignup.jsx";
-import { needsNudge } from "../lib/pods.js";
+import { needsNudge, assignPods } from "../lib/pods.js";
 import { useTheme } from "../theme/ThemeContext.jsx";
 
 function useTokens() {
@@ -43,6 +43,26 @@ export default function EventPage() {
       setTimeout(() => setCopied(false), 1500);
     });
   }, [code]);
+
+  // Opt out of your pod (back to waiting) or the whole event (removed from
+  // matching). Always available — re-reads the row, re-runs assignPods, writes.
+  const optOut = useCallback(async (scope) => {
+    const { data, error } = await supabase.from("sessions").select("data").eq("id", code).single();
+    if (error || !data) return;
+    const ev = data.data;
+    const players = ev.players.map((p) => {
+      if (p.id !== myId) return p;
+      return scope === "event"
+        ? { ...p, status: "opted_out", podId: null }
+        : { ...p, status: "waiting", podId: null };
+    });
+    const assigned = assignPods({ ...ev, players });
+    await supabase.from("sessions").update({ data: { ...ev, players: assigned.players, pods: assigned.pods } }).eq("id", code);
+    if (scope === "event") {
+      localStorage.removeItem(`podcheck-event-${code}`);
+      setMyId(null);
+    }
+  }, [code, myId]);
 
   useEffect(() => {
     async function load() {
@@ -106,6 +126,28 @@ export default function EventPage() {
         {/* Self-serve sign-up (player who hasn't joined) */}
         {!isHost && !meActive && (
           <EventSignup code={code} event={event} variant="self" onDone={(p) => setMyId(p.id)} />
+        )}
+
+        {/* Your status + always-available opt-out */}
+        {meActive && (
+          <div style={{ background: t.panel, border: `1px solid ${t.accent}`, borderRadius: 0, padding: "12px 14px", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <Identity player={me} color={t.accent} />
+              <span style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 10, color: t.dim, letterSpacing: 1 }}>
+                {me.status === "podded" ? "PODDED" : "WAITING"}
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {me.status === "podded" && (
+                <button onClick={() => optOut("pod")} style={{ flex: 1, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 0, padding: "9px", color: t.ink, fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}>
+                  LEAVE POD
+                </button>
+              )}
+              <button onClick={() => optOut("event")} style={{ flex: 1, background: "transparent", border: `1px solid ${t.attention}40`, borderRadius: 0, padding: "9px", color: t.attention, fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}>
+                LEAVE EVENT
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Host walk-in adder */}
