@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
+import { useTheme } from "../theme/ThemeContext.jsx";
 
-export const COLORS = ["#d4a0c0", "#c4915a", "#5aaa88", "#7ba7bb"];
-
+// Bracket labels. Colors were removed with the multi-theme teardown — the
+// single HELIX look reads brackets through neutral tokens at each call site.
 export const BRACKET_META = {
-  1: { label: "Precon",     color: "#5aaa88" },
-  2: { label: "Upgraded",   color: "#7ba7bb" },
-  3: { label: "Optimized",  color: "#c4915a" },
-  4: { label: "High Power", color: "#c45c6a" },
-  5: { label: "cEDH",       color: "#b8a8d8" },
+  1: { label: "Precon" },
+  2: { label: "Upgraded" },
+  3: { label: "Optimized" },
+  4: { label: "High Power" },
+  5: { label: "cEDH" },
 };
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -47,6 +48,8 @@ export function stapleForSession(id) {
 }
 
 export function SessionCodeCard({ sessionId }) {
+  const { theme, mode } = useTheme();
+  const dim = mode === "light" ? theme.muted : theme.dim;
   const cardName = stapleForSession(sessionId);
   const [card, setCard] = useState(null);
 
@@ -69,10 +72,9 @@ export function SessionCodeCard({ sessionId }) {
     <div onClick={() => navigator.clipboard?.copyText(cardName)} style={{ cursor: "pointer" }}>
       <div style={{
         width: "100%", maxWidth: 300, margin: "0 auto",
-        borderRadius: 12, border: `3px solid ${borderColor}`,
+        borderRadius: 0, border: `3px solid ${borderColor}`,
         background: "#c8ccdb", overflow: "hidden",
-        boxShadow: `0 0 32px ${borderColor}40`,
-        fontFamily: "serif",
+        fontFamily: "'Zilla Slab', serif",
       }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", background:"#aab0c7", borderBottom:"1.5px solid #7d82a2" }}>
           <span style={{ fontSize:16, fontWeight:700, color:"#1a1c2e" }}>{card?.name || "—"}</span>
@@ -91,16 +93,16 @@ export function SessionCodeCard({ sessionId }) {
           )}
         </div>
         <div style={{ padding:"3px 12px 6px", background:"#c8ccdb", textAlign:"right" }}>
-          <span style={{ fontSize:9, color:"#475569", fontFamily:"monospace", letterSpacing:1 }}>
+          <span style={{ fontSize:9, color:"#1a1c2e", fontFamily:"'Noto Sans Mono', monospace", letterSpacing:1 }}>
             {sessionId} · POD CHECK
           </span>
         </div>
       </div>
       <div style={{ textAlign:"center", marginTop:12 }}>
-        <div style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:24, letterSpacing:4, color: borderColor, textTransform:"uppercase", lineHeight:1, marginBottom:4 }}>
+        <div style={{ fontFamily:"'Zilla Slab', serif", fontWeight:700, fontSize:24, letterSpacing:1, color: borderColor, textTransform:"uppercase", lineHeight:1, marginBottom:4 }}>
           {card?.name || cardName}
         </div>
-        <div style={{ fontSize:10, color:"#334155", fontFamily:"monospace", letterSpacing:2 }}>
+        <div style={{ fontSize:10, color: dim, fontFamily:"'Noto Sans Mono', monospace", letterSpacing:2 }}>
           {sessionId}
         </div>
       </div>
@@ -125,41 +127,50 @@ export function newSession(id, mode = 'podcheck') {
 }
 
 export function PageWrapper({ children, style = {} }) {
+  const { theme, mode } = useTheme();
+  const ink = mode === "light" ? theme.ink : theme.white;
   return (
-    <div style={{ minHeight: "100vh", background: "#1a2744", color: "#e0f2ff", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", ...style }}>
+    <div style={{ minHeight: "100vh", background: theme.base, color: ink, fontFamily: "'Noto Sans', sans-serif", ...style }}>
       {children}
     </div>
   );
 }
 
 export function ScryCheckCredit() {
+  const { theme, mode } = useTheme();
+  const dim = mode === "light" ? theme.muted : theme.dim;
+  const border = mode === "light" ? theme.border : theme.muted;
+  const accent = mode === "light" ? theme.gold : theme.amber;
   return (
-    <div style={{ textAlign: "center", padding: "24px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: 11, color: "#475569", lineHeight: 1.8 }}>
+    <div style={{ textAlign: "center", padding: "24px 16px", borderTop: `1px solid ${border}`, fontSize: 11, color: dim, lineHeight: 1.8 }}>
       <div style={{ marginBottom: 4 }}>
         Deck analysis powered by{" "}
-        <a href="https://scrycheck.com" target="_blank" rel="noopener noreferrer" style={{ color: "#b8a8d8", textDecoration: "none", fontWeight: 600 }}>
+        <a href="https://scrycheck.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "none", fontWeight: 600 }}>
           ScryCheck
         </a>
         {" "}— the best Commander power level tool out there.
       </div>
       <div style={{ opacity: 0.6 }}>Pod Check is an unofficial fan app. Not affiliated with ScryCheck or Wizards of the Coast.</div>
-      <div style={{ marginTop: 8, fontSize: 10, color: "#334155" }}>
-        <a href="https://github.com/kylo-ben/pod-check/issues/new?template=bug_report.md&title=[BUG]%20" target="_blank" rel="noopener noreferrer" style={{ color: "#4c819c", textDecoration: "none" }}>report a bug</a>
+      <div style={{ marginTop: 8, fontSize: 10, color: dim }}>
+        <a href="https://github.com/kylo-ben/pod-check/issues/new?template=bug_report.md&title=[BUG]%20" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "none" }}>report a bug</a>
       </div>
     </div>
   );
 }
 
 export function Logo({ size = "md" }) {
+  const { theme, mode } = useTheme();
+  const ink = mode === "light" ? theme.ink : theme.white;
+  const dim = mode === "light" ? theme.muted : theme.dim;
   const fontSize = size === "lg" ? 40 : size === "sm" ? 20 : 28;
   const sub = size === "lg" ? 13 : 10;
   return (
     <div>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize, letterSpacing: 4, color: "#b8a8d8", lineHeight: 1 }}>
+      <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize, letterSpacing: 1, color: ink, lineHeight: 1 }}>
         POD CHECK
       </div>
       {size !== "sm" && (
-        <div style={{ fontSize: sub, color: "#475569", letterSpacing: 2, marginTop: 2 }}>
+        <div style={{ fontSize: sub, color: dim, letterSpacing: 2, marginTop: 2 }}>
           COMMANDER POWER BALANCE
         </div>
       )}
@@ -220,22 +231,3 @@ export function usePodPresence(user, deckData) {
   }, [user, deckData])
 }
 
-export function SessionCode({ code }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard?.writeText(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  };
-  return (
-    <button onClick={copy} style={{ background: "rgba(76,129,156,0.12)", border: "2px solid rgba(76,129,156,0.3)", borderRadius: 16, padding: "16px 28px", cursor: "pointer", textAlign: "center", width: "100%" }}>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, letterSpacing: 10, color: "#b1d7e1", lineHeight: 1, paddingLeft: 10 }}>
-        {code}
-      </div>
-      <div style={{ fontSize: 10, color: copied ? "#5aaa88" : "#475569", letterSpacing: 2, marginTop: 6, transition: "color 0.2s" }}>
-        {copied ? "COPIED ✓" : "TAP TO COPY"}
-      </div>
-    </button>
-  );
-}

@@ -4,11 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import { inject } from "@vercel/analytics";
 import * as Sentry from "@sentry/react";
 import { browserTracingIntegration } from "@sentry/react";
-import "./styles/tokens.css";
-import { initTheme } from "./styles/theme-switcher.js";
+import { ThemeProvider } from "./theme/ThemeContext.jsx";
 import App from "./App.jsx";
-
-initTheme();
 
 Sentry.init({
   dsn: "https://b36a7c2092f16303f53c93721f4d6fd4@o4511187779584000.ingest.us.sentry.io/4511187781550080",
@@ -22,7 +19,9 @@ inject();
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
