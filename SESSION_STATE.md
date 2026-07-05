@@ -8,10 +8,20 @@
 
 ## Recently Completed
 - ✅ 2026-07-05 — Diagnosed & fixed the live `sessions` table schema drift that broke CREATE EVENT.
+  **Event flow now verified working end-to-end in production** (create → multi-browser join →
+  auto-built pod → live host view). No code changes this session; DB-only.
   - **Symptom:** CREATE EVENT failed with `Could not find the 'data' column of 'sessions' in the schema cache` (not a stale cache — real schema mismatch).
-  - **Root cause:** Live `sessions` table did not match the repo schema ([supabase-setup.sql](supabase-setup.sql)). Live table had `id uuid` + `created_at` only; the code needs `id text` (5-char codes from `makeSessionId()`), a `data jsonb` blob column, and realtime enabled.
-  - **Fix (run by Ben in Supabase SQL editor):** dropped & recreated `sessions` per repo schema (table was empty, 0 rows), restored the 3 permissive RLS policies, and added the table to `supabase_realtime`. Migration succeeded.
-  - No code changes this session; DB-only.
+  - **Root cause:** Live `sessions` table did not match the repo schema ([supabase-setup.sql](supabase-setup.sql)). Three layered problems, surfaced one error at a time:
+    1. Missing `data jsonb` column (code stores the whole session as one blob).
+    2. `id` was `uuid`; code needs `text` (5-char codes from `makeSessionId()`).
+    3. After recreate, `anon`/`authenticated` roles had no table GRANTs → `permission denied for table sessions` (403).
+  - **Fix (run by Ben in Supabase SQL editor):**
+    1. Dropped & recreated `sessions` per repo schema (table was empty, 0 rows), restored the 3 permissive RLS policies, added it to `supabase_realtime`.
+    2. `grant usage on schema public to anon, authenticated;`
+       `grant select, insert, update, delete on table sessions to anon, authenticated;`
+  - **Lesson for future recreates:** a raw `create table` in the SQL editor does NOT auto-grant
+    the client roles the way the dashboard Table Editor does — always follow a recreate with the
+    GRANTs above, or writes 403 with "permission denied for table".
 
 ---
 
