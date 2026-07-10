@@ -7,6 +7,17 @@
 export const MAX_POD = 4;
 export const DEFAULT_TARGET = 3;
 
+// Deck sources the ScryCheck API accepts: public Archidekt & Moxfield URLs.
+// Used to validate deck-link input before hitting /api/scrape.
+export function isSupportedDeckUrl(raw) {
+  try {
+    const host = new URL(String(raw).trim()).hostname.replace(/^www\./, "").toLowerCase();
+    return host === "moxfield.com" || host === "archidekt.com";
+  } catch {
+    return false;
+  }
+}
+
 // ── Constructors ──────────────────────────────────────────────────────────────
 export function newEvent(id, targetBracket = DEFAULT_TARGET) {
   return {

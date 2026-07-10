@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import { BRACKET_META, PageWrapper, Logo, SessionCodeCard, useAuth, usePodPresence } from "../lib/ui.jsx";
 import SavedDeckPicker from "../components/SavedDeckPicker.jsx";
+import { isSupportedDeckUrl } from "../lib/pods.js";
 import { QRCodeSVG } from "qrcode.react";
 import { useTheme } from "../theme/ThemeContext.jsx";
 
@@ -319,7 +320,7 @@ function EscapeHatch({ onComplete }) {
       onClick={() => setShow(true)}
       style={{ background: "none", border: "none", color: t.dim, fontSize: 11, fontFamily: "inherit", cursor: "pointer", marginTop: 16, textDecoration: "underline", letterSpacing: 1 }}
     >
-      skip scrycheck — i know my bracket
+      skip analysis — i know my bracket
     </button>
   );
 
@@ -368,21 +369,20 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
   }, []);
 
   const handleContinue = useCallback(() => {
-    window.open("https://scrycheck.com", "_blank");
     setBars([true, false, false]);
     setError(null);
   }, []);
 
   const handleResultUrl = useCallback(async (url) => {
     const clean = url.trim();
-    if (!clean.startsWith("https://scrycheck.com/deck/")) {
-      setError("Paste your ScryCheck result URL — looks like scrycheck.com/deck/abc123"); return;
+    if (!isSupportedDeckUrl(clean)) {
+      setError("Paste your Moxfield or Archidekt deck URL — e.g. moxfield.com/decks/abc123"); return;
     }
     setLoading(true); setError(null);
     try {
       const res = await fetch(`/api/scrape?url=${encodeURIComponent(clean)}`);
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Scrape failed");
+      if (!res.ok) throw new Error(json.error || "Couldn't analyze that deck.");
       setBars([true, true, false]);
       await new Promise(r => setTimeout(r, 400));
       setBars([true, true, true]);
@@ -394,8 +394,8 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
   }, [onComplete]);
 
   const BAR_DEFS = [
-    { label: "YOUR DECK",  sub: "open your deck site and copy the URL" },
-    { label: "SCRYCHECK",  sub: "paste your deck URL into ScryCheck, then paste the result URL below" },
+    { label: "YOUR DECK",  sub: "open your deck site and copy the deck URL" },
+    { label: "ANALYZE",    sub: "paste your Moxfield or Archidekt deck URL below" },
     { label: "YOU'RE IN",  sub: "sit back" },
   ];
 
@@ -469,7 +469,7 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
                       value={resultInput}
                       onChange={e => setResultInput(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && resultInput.trim() && handleResultUrl(resultInput)}
-                      placeholder="https://scrycheck.com/deck/..."
+                      placeholder="https://moxfield.com/decks/..."
                       autoFocus
                       style={{ flex: 1, background: t.base, border: `1px solid ${error ? t.attention : t.border}`, borderRadius: 0, padding: "10px 12px", color: t.ink, fontSize: 16, fontFamily: "inherit" }}
                     />

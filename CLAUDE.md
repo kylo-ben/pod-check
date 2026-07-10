@@ -41,12 +41,16 @@ without flagging it.
 
 ### Pod Check — `pod-check.vercel.app`
 - **Repo:** `commander-zen/pod-check`
-- **What it does:** Commander power balance checker. Players join a session, submit deck URLs,
-  app scrapes ScryCheck data, produces a power bracket verdict.
+- **What it does:** Commander power balance checker. Players join a session, submit their
+  Archidekt/Moxfield deck URL, the app analyzes it via the official ScryCheck API, produces a
+  power bracket verdict.
 - **Flow ends** at BigVerdict screen — clean stop, no Life Check CTA in UI
-- **Key quirk:** Scraper URL requires double-encoding; only accepts `scrycheck.com/deck/` result
-  URLs, not submission URLs
-- **Escape hatch:** "Skip ScryCheck — I know my bracket" available throughout onboarding
+- **ScryCheck API:** `api/scrape.js` is a server-side proxy that POSTs the deck URL to the
+  official ScryCheck private-beta API (`/api/v1/analyze`) using `SCRYCHECK_API_KEY` (Vercel env
+  var + local `.env.local`, never the tracked `.env`). It accepts public Archidekt/Moxfield deck
+  URLs (NOT `scrycheck.com/deck/` result URLs) and normalizes the JSON into the app's `deckData`
+  shape. Shared URL validator: `isSupportedDeckUrl()` in `src/lib/pods.js`.
+- **Escape hatch:** "Skip analysis — I know my bracket" available throughout onboarding
 - **Offline players:** Host-side manual entry supported
 
 ### Life Check — `life-check.vercel.app`

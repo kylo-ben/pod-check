@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase.js";
 import { useTheme } from "../theme/ThemeContext.jsx";
 import {
-  newEventPlayer, commanderPeers, takenTiebreaks, firstFreeTiebreak, needsNudge, assignPods,
+  newEventPlayer, commanderPeers, takenTiebreaks, firstFreeTiebreak, needsNudge, assignPods, isSupportedDeckUrl,
 } from "../lib/pods.js";
 import TiebreakPicker from "./TiebreakPicker.jsx";
 
@@ -20,9 +20,9 @@ function useTokens() {
   };
 }
 
-// Self-serve (a player joins) or walk-in (host adds someone): paste a ScryCheck
-// deck URL, reuse /api/scrape to get the bracket, resolve a commander collision
-// with an emoji/color tiebreak, then write the player to the event.
+// Self-serve (a player joins) or walk-in (host adds someone): paste a Moxfield or
+// Archidekt deck URL, reuse /api/scrape to analyze it for the bracket, resolve a
+// commander collision with an emoji/color tiebreak, then write the player to the event.
 export default function EventSignup({ code, event, variant = "self", onDone, onCancel }) {
   const t = useTokens();
   const isWalkin = variant === "walkin";
@@ -39,15 +39,15 @@ export default function EventSignup({ code, event, variant = "self", onDone, onC
 
   const scrape = async () => {
     const clean = url.trim();
-    if (!clean.startsWith("https://scrycheck.com/deck/")) {
-      setError("Paste your ScryCheck result URL — looks like scrycheck.com/deck/abc123");
+    if (!isSupportedDeckUrl(clean)) {
+      setError("Paste your Moxfield or Archidekt deck URL — e.g. moxfield.com/decks/abc123");
       return;
     }
     setLoading(true); setError(null);
     try {
       const res = await fetch(`/api/scrape?url=${encodeURIComponent(clean)}`);
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Couldn't read that ScryCheck page.");
+      if (!res.ok) throw new Error(json.error || "Couldn't analyze that deck.");
       setScraped(json);
     } catch (e) {
       setError(e.message);
@@ -99,7 +99,7 @@ export default function EventSignup({ code, event, variant = "self", onDone, onC
         {isWalkin ? "ADD A WALK-IN" : "JOIN THIS EVENT"}
       </div>
       <div style={{ fontSize: 12, color: t.dim, lineHeight: 1.6, marginBottom: 14 }}>
-        {isWalkin ? "Paste their ScryCheck deck URL." : "Paste your ScryCheck deck URL — that's how you enter the lobby."}
+        {isWalkin ? "Paste their Moxfield or Archidekt deck URL." : "Paste your Moxfield or Archidekt deck URL — that's how you enter the lobby."}
       </div>
 
       {error && (
@@ -114,7 +114,7 @@ export default function EventSignup({ code, event, variant = "self", onDone, onC
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && url.trim() && scrape()}
-            placeholder="https://scrycheck.com/deck/..."
+            placeholder="https://moxfield.com/decks/..."
             autoFocus
             style={{ flex: 1, background: t.base, border: `1px solid ${t.border}`, borderRadius: 0, padding: "12px", color: t.ink, fontSize: 14, fontFamily: "inherit" }}
           />

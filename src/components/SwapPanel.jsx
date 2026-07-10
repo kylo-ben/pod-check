@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase.js";
 import { useTheme } from "../theme/ThemeContext.jsx";
-import { isPodValid, assignPods, displayName } from "../lib/pods.js";
+import { isPodValid, assignPods, displayName, isSupportedDeckUrl } from "../lib/pods.js";
 
 function useTokens() {
   const { theme, mode } = useTheme();
@@ -67,12 +67,12 @@ export default function SwapPanel({ code, pod, members, myId }) {
 
   const submitNew = () => run(async () => {
     const clean = url.trim();
-    if (!clean.startsWith("https://scrycheck.com/deck/")) {
-      throw new Error("Paste your ScryCheck result URL (scrycheck.com/deck/…).");
+    if (!isSupportedDeckUrl(clean)) {
+      throw new Error("Paste your Moxfield or Archidekt deck URL (e.g. moxfield.com/decks/…).");
     }
     const res = await fetch(`/api/scrape?url=${encodeURIComponent(clean)}`);
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Couldn't read that ScryCheck page.");
+    if (!res.ok) throw new Error(json.error || "Couldn't analyze that deck.");
 
     await mutatePod(code, pod.id, (ev, p) => {
       const players = ev.players.map((pl) =>
@@ -116,9 +116,9 @@ export default function SwapPanel({ code, pod, members, myId }) {
 
       {swap && amProposer && swap.outcome === "approved" && (
         <div>
-          <div style={{ ...small, color: t.accent, marginBottom: 8 }}>Approved — submit your new ScryCheck deck URL.</div>
+          <div style={{ ...small, color: t.accent, marginBottom: 8 }}>Approved — submit your new Moxfield or Archidekt deck URL.</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://scrycheck.com/deck/..." style={{ flex: 1, background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: "10px", color: t.ink, fontSize: 13, fontFamily: "inherit" }} />
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://moxfield.com/decks/..." style={{ flex: 1, background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: "10px", color: t.ink, fontSize: 13, fontFamily: "inherit" }} />
             <button onClick={submitNew} disabled={busy} style={{ ...btn(t), width: "auto", padding: "0 16px" }}>{busy ? "…" : "GO"}</button>
           </div>
         </div>

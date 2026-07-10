@@ -1,132 +1,116 @@
 // api/scrape.js
-// Vercel serverless function — runs Node.js server-side, no CORS issues.
-// Fetches a ScryCheck deck result page and returns parsed deck data as JSON.
+// Vercel serverless function — server-side only, holds the ScryCheck API secret.
+// Proxies the official ScryCheck private-beta API and normalizes the response into
+// the deckData shape the rest of the app already expects.
 //
-// Usage: GET /api/scrape?url=https://scrycheck.com/deck/abc123
+// The secret MUST stay server-side (ScryCheck forbids browser-side calls / committing
+// it). Set SCRYCHECK_API_KEY in Vercel env vars + local .env.local (git-ignored).
+//
+// Usage: GET /api/scrape?url=https://moxfield.com/decks/... (or archidekt.com/...)
+
+const SCRYCHECK_ENDPOINT = "https://scrycheck.com/api/v1/analyze";
+
+// Supported deck sources per the API docs: public Archidekt & Moxfield URLs.
+function isSupportedDeckUrl(raw) {
+  try {
+    const host = new URL(raw).hostname.replace(/^www\./, "").toLowerCase();
+    return host === "moxfield.com" || host === "archidekt.com";
+  } catch {
+    return false;
+  }
+}
+
+// ScryCheck error code → [http status, user-facing message].
+const ERROR_MAP = {
+  INVALID_REQUEST: [400, "That deck link didn't look right. Double-check the URL."],
+  UNSUPPORTED_SOURCE: [400, "That link isn't from a supported site. Use a public Archidekt or Moxfield deck URL."],
+  SOURCE_UNAVAILABLE: [404, "Couldn't read that deck — it may be private, deleted, or the site is down."],
+  TEMPORARILY_UNAVAILABLE: [429, "ScryCheck is busy right now. Wait a moment and try again."],
+  ANALYSIS_FAILED: [502, "ScryCheck couldn't analyze that deck. Try again."],
+};
 
 export default async function handler(req, res) {
-  // Only allow GET
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const API_KEY = process.env.SCRYCHECK_API_KEY;
+  if (!API_KEY) {
+    console.error("SCRYCHECK_API_KEY is not set.");
+    return res.status(500).json({ error: "Deck analysis isn't configured yet. Ping the host." });
+  }
+
   const { url } = req.query;
 
-  // Validate: must be a scrycheck.com/deck/ URL
-  if (!url || !url.startsWith("https://scrycheck.com/deck/")) {
+  if (!url || !isSupportedDeckUrl(url)) {
     return res.status(400).json({
-      error: "Invalid URL. Must be a ScryCheck deck result URL (https://scrycheck.com/deck/...)",
+      error: "Paste a public Archidekt or Moxfield deck URL (e.g. moxfield.com/decks/… or archidekt.com/decks/…).",
     });
   }
 
   try {
-    const response = await fetch(url, {
+    const apiRes = await fetch(SCRYCHECK_ENDPOINT, {
+      method: "POST",
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; PodCheck/1.0; +https://pod-check.vercel.app)",
-        Accept: "text/html",
+        Authorization: `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ url }),
     });
 
-    if (!response.ok) {
-      return res.status(502).json({ error: `ScryCheck returned ${response.status}` });
+    // A bare 404 from ScryCheck means the secret is missing/incorrect (intentional
+    // per the docs). Don't leak that — surface as a generic config error.
+    if (apiRes.status === 404) {
+      console.error("ScryCheck returned 404 — check SCRYCHECK_API_KEY.");
+      return res.status(500).json({ error: "Deck analysis isn't configured yet. Ping the host." });
     }
 
-    const html = await response.text();
-
-    const data = parseDeckPage(html, url);
-
-    if (!data.power && !data.commander) {
-      return res.status(422).json({ error: "Could not parse deck data from ScryCheck page." });
+    let json;
+    try {
+      json = await apiRes.json();
+    } catch {
+      return res.status(502).json({ error: "Unexpected response from ScryCheck. Try again." });
     }
 
-    // Cache for 5 minutes — ScryCheck results don't change often
+    if (!json || json.success === false) {
+      const code = json?.error?.code;
+      const [status, message] = ERROR_MAP[code] ?? [502, json?.error?.message || "Deck analysis failed. Try again."];
+      return res.status(status).json({ error: message });
+    }
+
+    const data = json.data || {};
+    const deckData = normalize(data);
+
+    // Cache for 5 minutes — matches ScryCheck's own caching; results rarely change.
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate");
-    return res.status(200).json(data);
+    return res.status(200).json(deckData);
   } catch (err) {
-    console.error("Scrape error:", err);
-    return res.status(500).json({ error: "Failed to fetch ScryCheck page." });
+    console.error("ScryCheck proxy error:", err);
+    return res.status(500).json({ error: "Failed to reach ScryCheck. Try again." });
   }
 }
 
-function decodeEntities(str) {
-  if (!str) return str;
-  return str
-    .replace(/&#x27;/g, "'").replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
-}
-
-function parseDeckPage(html, url) {
-  // ── Commander name ──────────────────────────────────────────────────────
-  // Title format: "Commander Name — Power X.X | ScryCheck"
-  const titleMatch = html.match(/<title>([^<]+?)\s*(?:—|–|-)\s*Power/i);
-  const h1Match = html.match(/<h1[^>]*>\s*([^<]+?)\s*<\/h1>/i);
-  let commander = titleMatch?.[1]?.trim() || h1Match?.[1]?.trim() || "Unknown Commander";
-  // Decode HTML entities and strip trailing " Commander Deck Analysis" suffix
-  commander = decodeEntities(commander).replace(/\s*Commander Deck Analysis.*$/i, "").trim();
-
-  // ── Power level ─────────────────────────────────────────────────────────
-  // Title format is always "Commander Name — Power 4.6 | ScryCheck"
-  const titlePowerMatch = html.match(/Power\s+([\d.]+)\s*\|/i);
-  const power = titlePowerMatch ? parseFloat(titlePowerMatch[1]) : null;
-
-  // ── Margin of error ─────────────────────────────────────────────────────
-  const marginMatch = html.match(/\d+\.\d+(?:±|&plusmn;|&#177;)([\d.]+)/);
-  const margin = marginMatch ? parseFloat(marginMatch[1]) : null;
-
-  // ── Tier label ──────────────────────────────────────────────────────────
-  const tierMatch = html.match(
-    /(cEDH|Fringe cEDH|High Power|Playing with Power|Deck With a Plan|Casual|Upgraded Precon|Precon|First Draft|Pile)/i
-  );
-  const tier = tierMatch?.[1] || null;
-
-  // ── Bracket ─────────────────────────────────────────────────────────────
-  // "Bracket 3" or "B3" pattern near the bracket section
-  const bracketMatch = html.match(/Bracket\s+(\d)/i) || html.match(/·B(\d)\b/);
-  const bracket = bracketMatch ? parseInt(bracketMatch[1]) : null;
-
-  // ── Vectors ─────────────────────────────────────────────────────────────
-  // Each vector score appears right after its label, e.g. "Speed\n48\n48"
-  // The HTML typically has them as  Speed</...>48  etc.
-  function extractVector(label) {
-    // Match label followed shortly by a 1-3 digit number
-    const re = new RegExp(label + "[\\s\\S]{0,60}?(\\d{1,3})(?=\\D)", "i");
-    const m = html.match(re);
-    if (!m) return null;
-    const val = parseInt(m[1]);
-    return val >= 0 && val <= 100 ? val : null;
-  }
-
-  const vectors = {
-    speed: extractVector("Speed"),
-    consistency: extractVector("Consistency"),
-    interaction: extractVector("Interaction"),
-    manaBase: extractVector("Mana base"),
-    threats: extractVector("Threats"),
-  };
-
-  // ── Win turn ────────────────────────────────────────────────────────────
-  const winMatch = html.match(/T(\d+)\s*(?:best|typical)/i);
-  const winTurn = winMatch ? parseInt(winMatch[1]) : null;
-
-  // ── Combos ──────────────────────────────────────────────────────────────
-  const combosMatch = html.match(/(\d+)\s*(?:combo|combos)\s*(?:total|detected)/i);
-  const combos = combosMatch ? parseInt(combosMatch[1]) : 0;
-
-  // ── Game changers ───────────────────────────────────────────────────────
-  const gcMatch = html.match(/(\d+)\s*Game [Cc]hanger/);
-  const gameChangers = gcMatch ? parseInt(gcMatch[1]) : 0;
-
+// Map the rich API response onto the deckData contract used across the app.
+// Keeps the (misspelled) `scrychecUrl` key — it's load-bearing in every consumer.
+function normalize(data) {
+  const v = data.vectors || {};
   return {
-    commander,
-    power,
-    margin,
-    tier,
-    bracket,
-    vectors,
-    winTurn,
-    combos,
-    gameChangers,
-    scrychecUrl: url,
+    commander: data.commanders?.[0] ?? data.name ?? "Unknown Commander",
+    power: data.powerLevel?.level ?? null,
+    margin: data.powerLevel?.interval?.margin ?? null,
+    tier: data.powerLevel?.tier ?? data.powerLevel?.label ?? null,
+    bracket: data.bracket?.number ?? null,
+    vectors: {
+      velocity: v.velocity ?? null,
+      consistency: v.consistency ?? null,
+      interaction: v.interaction ?? null,
+      efficiency: v.efficiency ?? null,
+      lethality: v.lethality ?? null,
+    },
+    winTurn: data.winSpeed?.typical ?? data.winSpeed?.earliest ?? null,
+    themes: data.summary?.themes ?? [],
+    warnings: data.summary?.warnings ?? [],
+    incomplete: data.incomplete ?? false,
+    scrychecUrl: data.deckUrl ?? null,
   };
 }

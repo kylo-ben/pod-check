@@ -6,7 +6,7 @@
 ## How it works
 
 1. **Host** opens the app, creates a session, gets a QR code
-2. **Players** scan the QR → land on a join page → pick a seat → analyze their deck on ScryCheck → paste the result URL
+2. **Players** scan the QR → land on a join page → pick a seat → paste their Archidekt/Moxfield deck URL (analyzed automatically via the ScryCheck API)
 3. Everyone watches a live lobby as each player submits
 4. Once all 4 are ready → results push to every screen simultaneously
 
@@ -29,24 +29,29 @@
 cp .env.example .env
 ```
 
-Fill in your `.env`:
+Fill in your `.env` (safe to commit — anon key is public):
 ```
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+The **ScryCheck API secret is server-side only and must NOT be committed.** Put it in a
+git-ignored `.env.local` (used by `vercel dev`), never in `.env`:
+```
+SCRYCHECK_API_KEY=your-scrycheck-private-beta-secret
 ```
 
 ### 3. Install and run locally
 
 ```bash
 npm install
-npm run dev
+vercel dev   # serves the /api/scrape function too — plain `npm run dev` won't
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open the URL Vercel prints (usually [http://localhost:3000](http://localhost:3000)).
 
-> **Note:** The `/api/scrape` serverless function only runs on Vercel.  
-> For local dev, you can test the UI flow — the scrape step will fail until deployed.  
-> To test scraping locally, run `vercel dev` instead of `npm run dev` (requires Vercel CLI).
+> **Note:** The `/api/scrape` serverless function (the ScryCheck API proxy) only runs under
+> `vercel dev` or on Vercel. With plain `npm run dev` the UI loads but deck analysis will fail.
 
 ---
 
@@ -69,6 +74,7 @@ Go to your Vercel project → **Settings → Environment Variables** and add:
 |------|-------|
 | `VITE_SUPABASE_URL` | your Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | your Supabase anon key |
+| `SCRYCHECK_API_KEY` | your ScryCheck private-beta secret (server-side only — do **not** prefix with `VITE_`) |
 
 ### Redeploy after adding env vars
 
@@ -100,7 +106,7 @@ pod-check/
 ├── supabase-setup.sql       ← run once in Supabase dashboard
 ├── .env.example
 ├── api/
-│   └── scrape.js            ← Vercel serverless: fetches + parses ScryCheck
+│   └── scrape.js            ← Vercel serverless: proxies the ScryCheck API (holds the secret)
 └── src/
     ├── main.jsx
     ├── App.jsx
@@ -119,8 +125,8 @@ pod-check/
 
 ## Credits
 
-Deck analysis is entirely powered by **[ScryCheck](https://scrycheck.com)**.  
-This app just reads their result pages — please support them and send your players there directly.
+Deck analysis is entirely powered by **[ScryCheck](https://scrycheck.com)**, via their official
+API. Please support them — each verdict links back to the full analysis on ScryCheck.
 
 Magic: The Gathering and all related trademarks are property of Wizards of the Coast LLC.  
 Pod Check is an unofficial fan project.

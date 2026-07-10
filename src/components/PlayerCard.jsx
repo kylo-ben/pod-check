@@ -22,6 +22,14 @@ function useTokens() {
   };
 }
 
+// Themes/warnings may arrive as plain strings or as objects ({label}/{text}/{message}).
+// Coerce to a display string so React never tries to render a raw object.
+function asText(item) {
+  if (item == null) return "";
+  if (typeof item === "string") return item;
+  return item.label ?? item.name ?? item.text ?? item.message ?? "";
+}
+
 function VectorBar({ label, value, color, track }) {
   if (value == null) return null;
   return (
@@ -141,26 +149,31 @@ export default function PlayerCard({ player, index, showResult = false, highligh
 
           {player.deckData.vectors && (
             <div>
-              <VectorBar label="Speed"       value={player.deckData.vectors.speed}       color={color} track={t.border} />
+              <VectorBar label="Velocity"    value={player.deckData.vectors.velocity}    color={color} track={t.border} />
               <VectorBar label="Consistency" value={player.deckData.vectors.consistency} color={color} track={t.border} />
               <VectorBar label="Interaction" value={player.deckData.vectors.interaction} color={color} track={t.border} />
-              <VectorBar label="Mana Base"   value={player.deckData.vectors.manaBase}    color={color} track={t.border} />
-              <VectorBar label="Threats"     value={player.deckData.vectors.threats}     color={color} track={t.border} />
+              <VectorBar label="Efficiency"  value={player.deckData.vectors.efficiency}  color={color} track={t.border} />
+              <VectorBar label="Lethality"   value={player.deckData.vectors.lethality}   color={color} track={t.border} />
             </div>
           )}
 
-          {(player.deckData.combos > 0 || player.deckData.gameChangers > 0) && (
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              {player.deckData.combos > 0 && (
-                <span style={{ fontSize: 10, color: t.attention, background: `${t.attention}1a`, borderRadius: 0, padding: "2px 7px" }}>
-                  {player.deckData.combos} combo{player.deckData.combos !== 1 ? "s" : ""}
+          {player.deckData.themes?.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+              {player.deckData.themes.map((theme, i) => (
+                <span key={i} style={{ fontSize: 10, color: t.accent, background: `${t.accent}1a`, borderRadius: 0, padding: "2px 7px" }}>
+                  {asText(theme)}
                 </span>
-              )}
-              {player.deckData.gameChangers > 0 && (
-                <span style={{ fontSize: 10, color: t.accent, background: `${t.accent}1a`, borderRadius: 0, padding: "2px 7px" }}>
-                  {player.deckData.gameChangers} game changer{player.deckData.gameChangers !== 1 ? "s" : ""}
-                </span>
-              )}
+              ))}
+            </div>
+          )}
+
+          {player.deckData.warnings?.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 10 }}>
+              {player.deckData.warnings.map((warning, i) => (
+                <div key={i} style={{ fontSize: 10, color: t.attention, lineHeight: 1.5 }}>
+                  ⚠ {asText(warning)}
+                </div>
+              ))}
             </div>
           )}
 
