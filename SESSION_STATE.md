@@ -1,9 +1,9 @@
 # Pod Check — Session State
 
 ## Cold Start Prompt
-**Priority:** Add `SCRYCHECK_API_KEY` to Vercel env vars (Prod/Preview/Dev) + local `.env.local`,
-then verify the new ScryCheck API integration end-to-end with a real Moxfield/Archidekt deck URL
-(single-pod join → verdict, event signup, swap). See Known Issues for the two still-open items.
+**Priority:** Add `SCRYCHECK_API_KEY` to Vercel env vars (Prod/Preview/Dev), then `git push` to
+deploy and smoke-test the ScryCheck integration in production (single-pod join → verdict, event
+signup, swap). API + auth already validated locally; only the Vercel env var + push remain.
 
 ---
 
@@ -24,8 +24,12 @@ then verify the new ScryCheck API integration end-to-end with a real Moxfield/Ar
     API's `themes` chips + `warnings` (rendered defensively via `asText()` in case they're objects).
   - Docs: `.gitignore` now ignores `.env.local`; `CLAUDE.md`, `README.md` updated for the API flow
     and the new `SCRYCHECK_API_KEY` (server-side only — must NOT go in the git-tracked `.env`).
-  - Verified: `npm run build` passes; normalize + URL validation checked against the docs' example
-    response. **Not yet exercised against the live API** (needs the secret + `vercel dev`).
+  - Verified: `npm run build` passes; **validated against the LIVE API (HTTP 200)** with a real
+    Moxfield deck — auth works (send both `Bearer` + `X-ScryCheck-API-Key`; Adam's note omitted
+    "Bearer" so we send both), normalize maps correctly. Confirmed shapes: `themes` are **objects**
+    (`{name,type,strength}`), `warnings` are **strings** — PlayerCard's `asText()` handles both.
+    (The old "combos" signal partly survives: the API returns e.g. `"1 Infinite Combo(s) Detected!"`
+    as a warning.) `scoringVersion` seen live = `v2026-07-10`.
 - ✅ 2026-07-05 — Diagnosed & fixed the live `sessions` table schema drift that broke CREATE EVENT.
   **Event flow now verified working end-to-end in production** (create → multi-browser join →
   auto-built pod → live host view). No code changes this session; DB-only.
@@ -56,10 +60,10 @@ then verify the new ScryCheck API integration end-to-end with a real Moxfield/Ar
 - **`.env` is git-tracked** (holds Supabase URL + anon key — those are public-safe, so not urgent,
   but the file being tracked is a footgun). The ScryCheck secret was deliberately kept OUT of it —
   it lives only in Vercel env vars + git-ignored `.env.local`. Consider untracking `.env` later.
-- **ScryCheck API unknowns:** the docs don't show the shape of `summary.themes` / `summary.warnings`
-  when populated (string vs object) — PlayerCard renders them defensively either way. Confirm once
-  a real deck returns non-empty values. Also: `combos` / `game changers` counts are gone (no API
-  field); verdict/scoring math is unchanged (still uses `power` + `bracket`).
+- **ScryCheck API note (resolved):** `themes` = objects `{name,type,strength}`, `warnings` = strings
+  (confirmed live). `combos` / `game changers` counts are gone (no API field); verdict/scoring math
+  is unchanged (still uses `power` + `bracket`). Only `theme.name` is shown as a chip — `type`/
+  `strength` are available if we ever want richer display.
 - **Duplicate verdict logic:** `BigVerdict` (inline in `JoinPage.jsx`) and `BalanceVerdict.jsx`
   both compute the same thresholds — pre-existing, untouched this session.
 
