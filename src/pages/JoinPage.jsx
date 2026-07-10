@@ -108,7 +108,7 @@ function BigVerdict({ players, mySeat, onResubmit }) {
   } else if (spread <= 2.5) {
     verdict = "NOTABLE MISMATCH"; sub = "Real bracket difference. Have a quick conversation before you play."; emoji = "⚠️";
   } else {
-    verdict = "BAD IDEA"; sub = "Significant power gap. Someone should grab a different deck."; emoji = "🔴";
+    verdict = "WIDE GAP"; sub = "Big spread in power. Someone grabbing a different deck would even it out."; emoji = "🔴";
   }
 
   const ranked = [
@@ -159,7 +159,7 @@ function BigVerdict({ players, mySeat, onResubmit }) {
                   onClick={onResubmit}
                   style={{ background: "none", border: `1px solid ${t.border}`, borderRadius: 0, padding: "2px 8px", fontSize: 9, color: t.dim, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, flexShrink: 0 }}
                 >
-                  RE-SUBMIT
+                  SWAP DECK
                 </button>
               )}
             </div>
@@ -401,7 +401,7 @@ function ThreeBarOnboarding({ session, mySeat, sessionId, onComplete }) {
 
   return (
     <div style={{ animation: "fadeUp 0.4s ease both" }}>
-      <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 28, letterSpacing: 1, color: t.ink, marginBottom: 6, lineHeight: 1.1 }}>ANALYZE YOUR DECK</div>
+      <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 28, letterSpacing: 1, color: t.ink, marginBottom: 6, lineHeight: 1.1 }}>ADD YOUR DECK</div>
       <div style={{ fontSize: 12, color: t.dim, marginBottom: 24, lineHeight: 1.7 }}>One paste. Thirty seconds.</div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -690,7 +690,7 @@ export default function JoinPage() {
 
         {step === 4 && (
           <div style={{ animation: "fadeUp 0.4s ease both", textAlign: "center", padding: "32px 0" }}>
-            <div style={{ fontSize: 11, color: t.accent, letterSpacing: 2, marginBottom: 20 }}>✓ DECK SUBMITTED</div>
+            <div style={{ fontSize: 11, color: t.accent, letterSpacing: 2, marginBottom: 20 }}>✓ YOU'RE AT THE TABLE</div>
             <div style={{ fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 32, letterSpacing: 1, color: t.ink, marginBottom: 8 }}>WAITING FOR THE POD</div>
             <div style={{ fontSize: 13, color: t.dim, marginBottom: 28 }}>Results appear automatically when everyone is ready.</div>
             <div style={{ display: "inline-block", background: "#ffffff", borderRadius: 0, padding: 16, marginBottom: 12 }}>

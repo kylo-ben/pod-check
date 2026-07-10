@@ -62,7 +62,7 @@ export default function EventHostSetup() {
           HOST AN EVENT
         </div>
         <div style={{ fontSize: 13, color: t.dim, lineHeight: 1.7, marginBottom: 24 }}>
-          Players sign up with a Moxfield or Archidekt deck URL. Pods fill by arrival, one bracket step apart.
+          Players drop in a deck link and the pods build themselves — fair tables, one bracket step apart.
         </div>
 
         <div style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 9, color: t.dim, letterSpacing: 1.5, marginBottom: 10 }}>

@@ -171,7 +171,7 @@ export function Logo({ size = "md" }) {
       </div>
       {size !== "sm" && (
         <div style={{ fontSize: sub, color: dim, letterSpacing: 2, marginTop: 2 }}>
-          COMMANDER POWER BALANCE
+          FAIR TABLES FOR COMMANDER DAY
         </div>
       )}
     </div>

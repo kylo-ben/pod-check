@@ -336,7 +336,7 @@ function MyDecksPage({ user, onDeckChange, onEnterPod }) {
             fontSize: 11, color: t.dim, lineHeight: 1.9,
             marginBottom: isAnon ? 24 : 0,
           }}>
-            Submit a deck in the pod flow<br />to save it here.
+            Add a deck at a table<br />to save it here.
           </div>
           {isAnon && (
             <button style={{

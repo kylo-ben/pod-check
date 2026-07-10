@@ -23,7 +23,8 @@
       "Read(//c/Users/beine/OneDrive/Desktop/repos/**)",
       "Bash(grep -rnilE 'Noto Sans|JetBrains Mono' __TRACKED_VAR__/src)",
       "Bash(cd \"/c/Users/beine/OneDrive/Desktop/repos/pod-check\" && grep -rn 'borderRadius: [^0]' src/pages/JoinPage.jsx src/pages/HostPage.jsx src/components/PersistentShell.jsx src/lib/ui.jsx src/App.jsx)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).type || '\\(none/CJS\\)'\\)\")"
     ]
   }
 }
