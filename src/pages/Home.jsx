@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageWrapper, Logo } from "../lib/ui.jsx";
+import { PageWrapper, Logo, ScryCheckCredit } from "../lib/ui.jsx";
 import { useTheme } from "../theme/ThemeContext.jsx";
 
 function useTokens() {
@@ -109,6 +109,8 @@ export default function Home() {
             just checking one table? use classic pod check →
           </button>
         </div>
+
+        <ScryCheckCredit />
       </div>
     </PageWrapper>
   );

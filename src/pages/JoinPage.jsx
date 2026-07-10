@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
-import { BRACKET_META, PageWrapper, Logo, SessionCodeCard, useAuth, usePodPresence } from "../lib/ui.jsx";
+import { BRACKET_META, PageWrapper, Logo, SessionCodeCard, useAuth, usePodPresence, ScryCheckCredit, ScryCheckBadge } from "../lib/ui.jsx";
 import SavedDeckPicker from "../components/SavedDeckPicker.jsx";
 import { isSupportedDeckUrl } from "../lib/pods.js";
 import { QRCodeSVG } from "qrcode.react";
@@ -127,6 +127,7 @@ function BigVerdict({ players, mySeat, onResubmit }) {
           <StatBox label="SPREAD" value={spread.toFixed(1)} />
           {bracketSpread > 0 && <StatBox label="BRACKET GAP" value={bracketSpread} />}
         </div>
+        <ScryCheckBadge style={{ marginTop: 20 }} />
       </div>
       <div style={{ background: t.panel, border: `1px solid ${t.border}`, borderRadius: 0, padding: 14, marginBottom: 16 }}>
         <div style={{ fontSize: 10, color: t.dim, letterSpacing: 2, marginBottom: 10 }}>POWER RANKING</div>
@@ -716,6 +717,7 @@ export default function JoinPage() {
                 DONE — BACK TO HOME
               </button>
             </div>
+            <ScryCheckCredit />
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
-import { PageWrapper, Logo } from "../lib/ui.jsx";
+import { PageWrapper, Logo, ScryCheckCredit } from "../lib/ui.jsx";
 import PodCard, { NudgeTag } from "../components/PodCard.jsx";
 import Identity from "../components/Identity.jsx";
 import EventSignup from "../components/EventSignup.jsx";
@@ -195,6 +195,8 @@ export default function EventPage() {
             ))}
           </div>
         )}
+
+        <ScryCheckCredit />
       </div>
     </PageWrapper>
   );

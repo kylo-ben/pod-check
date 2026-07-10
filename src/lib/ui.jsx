@@ -136,23 +136,49 @@ export function PageWrapper({ children, style = {} }) {
   );
 }
 
+// Compact inline credit for placing right where scores are shown (verdict cards,
+// deck rows). Loud enough to be obvious that the number came from ScryCheck.
+export function ScryCheckBadge({ style = {} }) {
+  const { theme, mode } = useTheme();
+  const dim = mode === "light" ? theme.muted : theme.dim;
+  const accent = mode === "light" ? theme.gold : theme.amber;
+  return (
+    <div style={{ textAlign: "center", fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, color: dim, letterSpacing: 0.5, lineHeight: 1.6, ...style }}>
+      Scores by{" "}
+      <a href="https://scrycheck.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "none", fontWeight: 700 }}>
+        ScryCheck
+      </a>
+      {" "}— the best EDH deck grader in the biz.
+    </div>
+  );
+}
+
 export function ScryCheckCredit() {
   const { theme, mode } = useTheme();
+  const ink = mode === "light" ? theme.ink : theme.white;
   const dim = mode === "light" ? theme.muted : theme.dim;
   const border = mode === "light" ? theme.border : theme.muted;
   const accent = mode === "light" ? theme.gold : theme.amber;
   return (
-    <div style={{ textAlign: "center", padding: "24px 16px", borderTop: `1px solid ${border}`, fontSize: 11, color: dim, lineHeight: 1.8 }}>
-      <div style={{ marginBottom: 4 }}>
-        Deck analysis powered by{" "}
-        <a href="https://scrycheck.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "none", fontWeight: 600 }}>
-          ScryCheck
-        </a>
-        {" "}— the best Commander power level tool out there.
+    <div style={{ textAlign: "center", padding: "28px 16px", borderTop: `1px solid ${border}`, fontSize: 12, color: dim, lineHeight: 1.7 }}>
+      <div style={{ fontFamily: "'Noto Sans Mono', monospace", fontSize: 9, letterSpacing: 2, color: dim, marginBottom: 6 }}>
+        POWERED BY
       </div>
-      <div style={{ opacity: 0.6 }}>Pod Check is an unofficial fan app. Not affiliated with ScryCheck or Wizards of the Coast.</div>
+      <a
+        href="https://scrycheck.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ display: "inline-block", fontFamily: "'Zilla Slab', serif", fontWeight: 700, fontSize: 26, letterSpacing: 1, color: accent, textDecoration: "none", marginBottom: 8 }}
+      >
+        ScryCheck ↗
+      </a>
+      <div style={{ maxWidth: 300, margin: "0 auto 10px", color: ink, fontWeight: 600, lineHeight: 1.6 }}>
+        Every power score in Pod Check comes straight from ScryCheck — hands down the best way to
+        grade an EDH deck. Best in the biz.
+      </div>
+      <div style={{ opacity: 0.6, fontSize: 11 }}>Pod Check is an unofficial fan app. Not affiliated with ScryCheck or Wizards of the Coast.</div>
       <div style={{ marginTop: 8, fontSize: 10, color: dim }}>
-        <a href="https://github.com/kylo-ben/pod-check/issues/new?template=bug_report.md&title=[BUG]%20" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "none" }}>report a bug</a>
+        <a href="https://github.com/commander-zen/pod-check/issues/new?template=bug_report.md&title=[BUG]%20" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "none" }}>report a bug</a>
       </div>
     </div>
   );

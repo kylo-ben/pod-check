@@ -8,6 +8,11 @@ is pushed to `master` (deploy auto-triggered). Confirm `/api/scrape` returns 200
 ---
 
 ## Recently Completed
+- ✅ 2026-07-10 — **Heavy ScryCheck credit rollout.** Strengthened `ScryCheckCredit` (POWERED BY +
+  big link + "best in the biz" endorsement) and added a compact `ScryCheckBadge` ("Scores by
+  ScryCheck — the best EDH deck grader in the biz"). Credit now appears on Home (front door), the
+  BigVerdict score screen (inline badge + footer), the Event lobby, and Host page. Both in
+  `src/lib/ui.jsx`. Prod integration confirmed working by Ben.
 - ✅ 2026-07-10 — **Hooked Pod Check into the official ScryCheck private-beta API** (replaces the
   fragile HTML scraper).
   - `api/scrape.js` rewritten as a server-side proxy: POSTs the deck URL to
