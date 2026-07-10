@@ -1,12 +1,31 @@
 # Pod Check — Session State
 
 ## Cold Start Prompt
-**Priority:** Verify classic single-pod "HOST A POD" create works end-to-end — the classic
-`sessions` insert was dropped in an earlier refactor and may need restoring (see Known Issues).
+**Priority:** Add `SCRYCHECK_API_KEY` to Vercel env vars (Prod/Preview/Dev) + local `.env.local`,
+then verify the new ScryCheck API integration end-to-end with a real Moxfield/Archidekt deck URL
+(single-pod join → verdict, event signup, swap). See Known Issues for the two still-open items.
 
 ---
 
 ## Recently Completed
+- ✅ 2026-07-10 — **Hooked Pod Check into the official ScryCheck private-beta API** (replaces the
+  fragile HTML scraper).
+  - `api/scrape.js` rewritten as a server-side proxy: POSTs the deck URL to
+    `https://scrycheck.com/api/v1/analyze` with `Authorization: Bearer $SCRYCHECK_API_KEY`, maps
+    the ScryCheck error codes to friendly messages, and normalizes the rich JSON back into the
+    existing `deckData` shape (kept the load-bearing misspelled `scrychecUrl` key). Route/filename
+    unchanged so `vercel.json` + the three callers still work.
+  - **Input changed:** users now paste a public **Archidekt/Moxfield deck URL** directly (no more
+    pre-run `scrycheck.com/deck/` result URL). Shared validator `isSupportedDeckUrl()` added to
+    `src/lib/pods.js`; wired into `JoinPage` (ThreeBarOnboarding — dropped the ScryCheck detour),
+    `EventSignup`, and `SwapPanel`, with updated copy/placeholders throughout.
+  - **PlayerCard:** vector bars relabeled to the API's real names (Velocity/Consistency/
+    Interaction/Efficiency/Lethality); combos/game-changers (not in the API) replaced with the
+    API's `themes` chips + `warnings` (rendered defensively via `asText()` in case they're objects).
+  - Docs: `.gitignore` now ignores `.env.local`; `CLAUDE.md`, `README.md` updated for the API flow
+    and the new `SCRYCHECK_API_KEY` (server-side only — must NOT go in the git-tracked `.env`).
+  - Verified: `npm run build` passes; normalize + URL validation checked against the docs' example
+    response. **Not yet exercised against the live API** (needs the secret + `vercel dev`).
 - ✅ 2026-07-05 — Diagnosed & fixed the live `sessions` table schema drift that broke CREATE EVENT.
   **Event flow now verified working end-to-end in production** (create → multi-browser join →
   auto-built pod → live host view). No code changes this session; DB-only.
@@ -34,6 +53,15 @@
   shared-auth / auto-join refactor. **Needs verification + likely restore.**
 - **No migration trail:** Live DB drifted from `supabase-setup.sql` with no `supabase/migrations/`
   folder to track schema. This drift is what caused today's outage. Candidate backlog item.
+- **`.env` is git-tracked** (holds Supabase URL + anon key — those are public-safe, so not urgent,
+  but the file being tracked is a footgun). The ScryCheck secret was deliberately kept OUT of it —
+  it lives only in Vercel env vars + git-ignored `.env.local`. Consider untracking `.env` later.
+- **ScryCheck API unknowns:** the docs don't show the shape of `summary.themes` / `summary.warnings`
+  when populated (string vs object) — PlayerCard renders them defensively either way. Confirm once
+  a real deck returns non-empty values. Also: `combos` / `game changers` counts are gone (no API
+  field); verdict/scoring math is unchanged (still uses `power` + `bracket`).
+- **Duplicate verdict logic:** `BigVerdict` (inline in `JoinPage.jsx`) and `BalanceVerdict.jsx`
+  both compute the same thresholds — pre-existing, untouched this session.
 
 ---
 
