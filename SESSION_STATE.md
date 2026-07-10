@@ -1,9 +1,9 @@
 # Pod Check — Session State
 
 ## Cold Start Prompt
-**Priority:** Add `SCRYCHECK_API_KEY` to Vercel env vars (Prod/Preview/Dev), then `git push` to
-deploy and smoke-test the ScryCheck integration in production (single-pod join → verdict, event
-signup, swap). API + auth already validated locally; only the Vercel env var + push remain.
+**Priority:** Smoke-test the ScryCheck integration in the live Vercel deploy — single-pod join →
+verdict, event signup, deck swap — using a real Moxfield/Archidekt URL. Key is in Vercel and code
+is pushed to `master` (deploy auto-triggered). Confirm `/api/scrape` returns 200 in prod.
 
 ---
 
@@ -66,6 +66,12 @@ signup, swap). API + auth already validated locally; only the Vercel env var + p
   `strength` are available if we ever want richer display.
 - **Duplicate verdict logic:** `BigVerdict` (inline in `JoinPage.jsx`) and `BalanceVerdict.jsx`
   both compute the same thresholds — pre-existing, untouched this session.
+- **Git remote moved:** `origin` still points at `kylo-ben/pod-check`, but GitHub now redirects it to
+  `commander-zen/pod-check` (the canonical repo per CLAUDE.md). Push works via redirect; update the
+  remote when convenient: `git remote set-url origin https://github.com/commander-zen/pod-check.git`.
+- **Merge note:** the ScryCheck work was merged with the `reposition` PR (#2, event-first home +
+  brand-voice copy sweep). Event copy now uses the new voice ("drop in a deck link… never a power
+  check") with the source corrected to "Moxfield or Archidekt" (was "ScryCheck deck link").
 
 ---
 
