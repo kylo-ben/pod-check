@@ -52,7 +52,9 @@ export default async function handler(req, res) {
     const apiRes = await fetch(SCRYCHECK_ENDPOINT, {
       method: "POST",
       headers: {
+        // Docs document both forms; send both so a strict parser on either works.
         Authorization: `Bearer ${API_KEY}`,
+        "X-ScryCheck-API-Key": API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ url }),
