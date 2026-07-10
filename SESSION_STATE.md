@@ -8,6 +8,9 @@ is pushed to `master` (deploy auto-triggered). Confirm `/api/scrape` returns 200
 ---
 
 ## Recently Completed
+- ✅ 2026-07-10 — Removed the "just checking one table? use classic pod check" trapdoor link from
+  Home per Ben (legacy, unused). `/classic` route + `PersistentShell`/`HostPage`/`JoinPage` code
+  kept intentionally (chose "hide the link", not full removal) — now unreachable from the UI.
 - ✅ 2026-07-10 — **Heavy ScryCheck credit rollout.** Strengthened `ScryCheckCredit` (POWERED BY +
   big link + "best in the biz" endorsement) and added a compact `ScryCheckBadge` ("Scores by
   ScryCheck — the best EDH deck grader in the biz"). Credit now appears on Home (front door), the

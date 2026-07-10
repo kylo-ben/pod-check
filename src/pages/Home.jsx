@@ -96,20 +96,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Quiet legacy path */}
-        <div style={{ textAlign: "center", paddingTop: 28 }}>
-          <button
-            onClick={() => navigate("/classic")}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              fontFamily: "'Noto Sans Mono', monospace", fontSize: 11, color: t.dim,
-              letterSpacing: 1, textDecoration: "underline", lineHeight: 1.6,
-            }}
-          >
-            just checking one table? use classic pod check →
-          </button>
-        </div>
-
         <ScryCheckCredit />
       </div>
     </PageWrapper>
